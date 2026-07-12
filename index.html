@@ -223,6 +223,22 @@
   .tools .btn{flex:1;font-size:12.5px;padding:12px 6px;}
   .toast{position:absolute;left:50%;bottom:94px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font:500 12.5px var(--body);padding:11px 17px;border-radius:12px;box-shadow:var(--sh-md);opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:88%;text-align:center;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .sync-bar{display:flex;align-items:center;gap:10px;border-radius:14px;padding:12px 13px;margin-bottom:13px;border:1px solid;}
+  .sync-bar .d{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
+  .sync-bar .t{flex:1;font:400 11.5px/1.45 var(--body);}
+  .sync-bar.ok{background:var(--ok-bg);border-color:#bfe6d6;color:#1a7a5e;}
+  .sync-bar.ok .d{background:var(--ok);}
+  .sync-bar.warn{background:var(--warn-bg);border-color:#f0dda0;color:#8a6d00;}
+  .sync-bar.warn .d{background:var(--warn);}
+  .sync-bar.wait{background:var(--sky-50);border-color:var(--sky-200);color:var(--sky-700);}
+  .sync-bar.wait .d{background:var(--sky-400);animation:pulse 1.6s ease-in-out infinite;}
+  .sync-bar.off{background:#f4f6f8;border-color:#dfe5ea;color:var(--muted);}
+  .sync-bar.off .d{background:var(--muted);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+  .sdot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;margin-left:2px;}
+  .sdot.ok{background:var(--ok);}
+  .sdot.wait{background:var(--warn);}
+  .done .sync.queued{background:var(--sky-50);color:var(--sky-700);}
   .draft{display:flex;align-items:center;gap:10px;background:var(--warn-bg);border:1px solid #f0dda0;border-radius:14px;padding:12px 14px;margin-bottom:14px;}
   .draft .t{flex:1;font:500 12px/1.4 var(--body);color:#8a6d00;}
 </style>
@@ -576,6 +592,7 @@ function renderHome(){
         <div class="t"><b>Unfinished record.</b><br>${esc(draft.ans.studyId||'Enrolment in progress')} — ${esc(PAGES[draft.pg]?PAGES[draft.pg].title:'')}</div>
         <button class="btn btn-primary btn-sm" style="flex:0 0 auto" onclick="resumeDraft()">Resume</button>
       </div>`:''}
+      ${syncBar()}
       <div class="quota" onclick="loadCounts();renderHome()" style="cursor:pointer">
         <h4><span class="dot"></span>Recruitment progress
           <span style="margin-left:auto;font:500 10px var(--body);color:var(--muted)">${esc(srcNote)}</span></h4>
@@ -605,6 +622,21 @@ function renderHome(){
       <button class="btn btn-ghost btn-block btn-sm" onclick="setGAS()">${GAS_URL?'Google Sheet connected · change':'Connect Google Sheet'}</button>
     </div></div>`;
 }
+/* Persistent, honest status of the outbox. */
+function syncBar(){
+  const q=pending().length, on=navigator.onLine;
+  if(!GAS_URL) return `<div class="sync-bar off"><span class="d"></span>
+      <div class="t"><b>Not connected to Google Sheets.</b> Records are saved on this device only.</div>
+      <button class="btn btn-ghost btn-sm" style="flex:0 0 auto" onclick="event.stopPropagation();setGAS()">Connect</button></div>`;
+  if(!q) return `<div class="sync-bar ok"><span class="d"></span>
+      <div class="t"><b>All records synced.</b> ${records.length} enrolment${records.length===1?'':'s'} are in Google Sheets.</div></div>`;
+  if(!on) return `<div class="sync-bar wait"><span class="d"></span>
+      <div class="t"><b>${q} record${q===1?'':'s'} waiting to sync.</b><br>No internet. They will upload automatically when you are back online.</div></div>`;
+  return `<div class="sync-bar warn"><span class="d"></span>
+      <div class="t"><b>${q} record${q===1?'':'s'} not yet in Google Sheets.</b><br>Saved safely on this device.</div>
+      <button class="btn btn-primary btn-sm" style="flex:0 0 auto" onclick="event.stopPropagation();syncNow()">Sync now</button></div>`;
+}
+
 function setGAS(){
   const v=prompt('Paste the Google Apps Script Web App URL (ends with /exec):',GAS_URL||'');
   if(v===null)return;
@@ -906,24 +938,113 @@ function submitRec(){
   const rec=Object.assign({},ans,{
     _id:ans.studyId, _ts:new Date().toISOString(),
     _group:isCase(ans)?'Case':'Control',
-    _whoSigns:(Array.isArray(ans.C16)?ans.C16:[]).filter(x=>x!=='None present').join('; ')
+    _whoSigns:(Array.isArray(ans.C16)?ans.C16:[]).filter(x=>x!=='None present').join('; '),
+    _synced:false                     /* saved here first — always */
   });
   records.push(rec); Store.set(REC_KEY,records); discardDraft();
   renderDone(rec);
-  if(GAS_URL){
-    setSync('checking','Sending to Google Sheet…');
-    send(rec,ok=>{ setSync(ok?'on':'warn', ok?'☁ Saved to Google Sheet':'⚠ Saved on this device only'); if(ok) loadCounts(); });
-  }
+
+  if(!GAS_URL){ setSync('warn','◍ Saved on this device only'); return; }
+  if(!navigator.onLine){ setSync('queued','◍ No internet — queued, will sync automatically'); return; }
+  setSync('checking','Sending to Google Sheet…');
+  send(rec,(ok,status)=>{
+    if(ok){
+      rec._synced=true; rec._syncedAt=new Date().toISOString(); Store.set(REC_KEY,records);
+      setSync('on', status==='duplicate' ? '☁ Already in Google Sheet' : '☁ Saved to Google Sheet');
+      loadCounts();
+    }else{
+      rec._syncTries=1; rec._lastError=status||'failed'; Store.set(REC_KEY,records);
+      setSync('queued','◍ Not sent — queued, will retry automatically');
+    }
+  });
 }
+/* =========================================================
+   OFFLINE QUEUE / SYNC ENGINE
+   ---------------------------------------------------------
+   Every enrolment is written to this device FIRST and marked
+   _synced:false. A background worker pushes unsynced records to
+   Google Sheets and flips the flag on success. Nothing is ever
+   lost to a bad connection: the queue survives an app close, and
+   retries automatically when the network comes back.
+   ========================================================= */
 function send(rec,cb){
-  if(!GAS_URL){cb&&cb(false);return;}
-  const fn='__w'+Date.now(); let done=false;
-  const s=document.createElement('script');
-  window[fn]=r=>{done=true;delete window[fn];s.remove();cb&&cb(!!(r&&r.status==='ok'));};
-  s.onerror=()=>{if(done)return;delete window[fn];s.remove();cb&&cb(false);};
-  s.src=GAS_URL+(GAS_URL.indexOf('?')>-1?'&':'?')+'data='+encodeURIComponent(JSON.stringify(rec))+'&callback='+fn+'&t='+Date.now();
-  document.body.appendChild(s);
-  setTimeout(()=>{if(!done){try{delete window[fn];s.remove();}catch(e){}cb&&cb(false);}},20000);
+  if(!GAS_URL){cb&&cb(false,'no-url');return;}
+  const fn='__w'+Date.now()+Math.floor(Math.random()*1e4); let done=false;
+  const el=document.createElement('script');
+  window[fn]=r=>{
+    done=true; delete window[fn]; el.remove();
+    /* a duplicate means the row is already in the sheet — treat as synced,
+       so a half-completed earlier attempt cannot double-enter the child */
+    const ok = !!(r && (r.status==='ok' || r.status==='duplicate'));
+    cb&&cb(ok, r&&r.status);
+  };
+  el.onerror=()=>{if(done)return;delete window[fn];el.remove();cb&&cb(false,'network');};
+  el.src=GAS_URL+(GAS_URL.indexOf('?')>-1?'&':'?')+'data='+encodeURIComponent(JSON.stringify(rec))+'&callback='+fn+'&t='+Date.now();
+  document.body.appendChild(el);
+  setTimeout(()=>{if(!done){try{delete window[fn];el.remove();}catch(e){}cb&&cb(false,'timeout');}},20000);
+}
+
+function pending(){ return records.filter(r=>!r._synced); }
+
+let syncing=false;
+/* Push the queue one record at a time (Apps Script serialises writes anyway,
+   and one-at-a-time keeps a weak connection from dropping the whole batch). */
+function syncQueue(cb,onProgress){
+  if(syncing){ cb&&cb(0,0); return; }
+  const q=pending();
+  if(!GAS_URL||!q.length||!navigator.onLine){ cb&&cb(0,q.length); return; }
+  syncing=true;
+  let sent=0, i=0;
+  const step=()=>{
+    if(i>=q.length){
+      syncing=false; Store.set(REC_KEY,records);
+      if(sent) loadCounts();
+      cb&&cb(sent,pending().length);
+      return;
+    }
+    const rec=q[i];
+    onProgress&&onProgress(i+1,q.length);
+    send(rec,(ok,status)=>{
+      if(ok){
+        rec._synced=true; rec._syncedAt=new Date().toISOString(); sent++;
+        Store.set(REC_KEY,records);
+      }else{
+        rec._syncTries=(rec._syncTries||0)+1;
+        rec._lastError=status||'failed';
+      }
+      i++;
+      /* stop early if the network is clearly gone — keep the rest queued */
+      if(!ok && (status==='network'||status==='timeout') && !navigator.onLine){
+        syncing=false; Store.set(REC_KEY,records); cb&&cb(sent,pending().length); return;
+      }
+      setTimeout(step,300);
+    });
+  };
+  step();
+}
+
+/* Auto-sync: on load, when the browser regains connectivity, when the app is
+   brought back to the foreground, and every 60s as a safety net. */
+function autoSync(){ if(GAS_URL&&navigator.onLine&&pending().length) syncQueue(n=>{ if(n) refreshSyncUI(); }); }
+window.addEventListener('online', ()=>{ toast('Back online — syncing…'); autoSync(); });
+window.addEventListener('offline',()=>{ refreshSyncUI(); });
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) autoSync(); });
+setInterval(autoSync,60000);
+
+function refreshSyncUI(){
+  if(document.querySelector('.sync-bar')||document.querySelector('.quota')) renderHome();
+  else if(document.querySelector('.list')) renderList();
+}
+function syncNow(){
+  if(!GAS_URL){ toast('Connect a Google Sheet first'); return; }
+  if(!navigator.onLine){ toast('No internet connection — will sync automatically'); return; }
+  const n=pending().length;
+  if(!n){ toast('Everything is already synced'); return; }
+  toast('Syncing '+n+' record'+(n===1?'':'s')+'…');
+  syncQueue((sent,left)=>{
+    toast(sent? sent+' synced'+(left?', '+left+' still pending':'') : 'Could not reach Google Sheets');
+    refreshSyncUI();
+  });
 }
 function setSync(cls,txt){const e=document.getElementById('syncPill');if(!e)return;e.className='sync '+cls;e.textContent=txt;}
 function renderDone(r){
@@ -933,6 +1054,8 @@ function renderDone(r){
     <div class="idbig">${esc(r._id)}</div>
     <p>${esc(r._group)} · ${esc(r.hospital||'')}<br>Both instruments recorded.</p>
     <span class="sync ${GAS_URL?'checking':'warn'}" id="syncPill">${GAS_URL?'Checking Google Sheet…':'◍ Saved on this device only'}</span>
+    <p style="font:400 11.5px/1.5 var(--body);color:var(--muted);max-width:31ch;margin:-8px 0 18px">
+      This record is safe on the device. If it hasn’t reached Google Sheets it stays queued and syncs itself when the connection returns.</p>
     <div class="actions">
       <button class="btn btn-primary btn-block" onclick="startNew()">Enrol next child</button>
       <button class="btn btn-ghost btn-block" onclick="openList()">View records</button>
@@ -975,9 +1098,12 @@ function renderList(){
         <div class="av">${esc(r._id||'?')}</div>
         <div class="m"><div class="t">${esc(r.A1||'—')} · ${esc(r.A2||'?')} mo · ${esc(r.A3||'')}</div>
           <div class="s">${esc(r.hospital||'')} · ${esc(r.enrolDate||'')}</div></div>
-        <span class="pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span></div>`;}).join('')
+        <span class="pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span>
+        <span class="sdot ${r._synced?'ok':'wait'}" title="${r._synced?'Synced to Google Sheets':'Not yet synced'}"></span></div>`;}).join('')
       :'<div style="font:400 12.5px var(--body);color:var(--muted);padding:14px 0">No records in this filter.</div>'}
     </div>
+    ${pending().length?`<button class="btn btn-primary btn-block" style="margin-bottom:11px" onclick="syncNow()">
+        Resubmit ${pending().length} unsynced record${pending().length===1?'':'s'}</button>`:''}
     <div class="tools">
       <button class="btn btn-ghost" onclick="exportCSV(lFilt().map(x=>x.r),'severe_malaria.csv')">Export CSV</button>
       <button class="btn btn-danger" onclick="clearAll()">Clear all</button>
@@ -1109,7 +1235,7 @@ function drawDash(){
    TOOLS
    ========================================================= */
 function csvCols(){
-  const meta=['_id','_ts','_group','hospital','enrolDate','enrolTime','interviewer'];
+  const meta=['_id','_ts','_group','hospital','enrolDate','enrolTime','interviewer','_synced'];
   const qs=[]; const hdr=[];
   ALL.forEach(q=>{
     if(q.type==='note'||q.type==='auto') return;
@@ -1121,7 +1247,7 @@ function csvCols(){
     qs.push(q.id); hdr.push(q.q);
     if(q.other){ qs.push(q.id+'_other'); hdr.push(q.q+' — Other (specify)'); }
   });
-  return {cols:meta.concat(qs), hdr:['Study ID','Submitted at','Group','Hospital','Enrolment date','Enrolment time','Interviewer'].concat(hdr)};
+  return {cols:meta.concat(qs), hdr:['Study ID','Submitted at','Group','Hospital','Enrolment date','Enrolment time','Interviewer','Synced to Sheets'].concat(hdr)};
 }
 function exportCSV(data,name){
   if(!data||!data.length){toast('No data to export');return;}
@@ -1132,9 +1258,15 @@ function exportCSV(data,name){
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=name;
   document.body.appendChild(a);a.click();a.remove();toast('CSV exported');
 }
-function clearAll(){if(!confirm('Delete all enrolments stored on this device?'))return;records=[];Store.set(REC_KEY,records);renderList();}
+function clearAll(){
+  const q=pending().length;
+  if(q && !confirm(q+' record'+(q===1?' has':'s have')+' NOT been uploaded to Google Sheets yet.\n\nDeleting now will lose '+(q===1?'it':'them')+' permanently. Sync first?\n\nPress Cancel to go back and sync.')) return;
+  if(!confirm('Delete all '+records.length+' enrolments stored on this device?')) return;
+  records=[];Store.set(REC_KEY,records);renderList();
+}
 
 renderHome();
+autoSync();   /* flush anything left over from a previous session */
 </script>
 </body>
 </html>
