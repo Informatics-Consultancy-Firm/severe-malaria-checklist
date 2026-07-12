@@ -330,10 +330,21 @@ const CRF=[
   {id:'C16',n:16,sec:'C · Admission assessment', type:'multi',  q:'Severe malaria signs present',
      help:'Tick all that apply.', options:WHO_SIGNS, other:true, none:'None present'},
 
-  /* SECTION D — LABORATORY FINDINGS */
-  {id:'D17',n:17,sec:'D · Laboratory findings', type:'choice', q:'RDT result', options:['Positive','Negative']},
-  {id:'D18',n:18,sec:'D · Laboratory findings', type:'choice', q:'Microscopy result', options:['Positive','Negative']},
-  {id:'D19',n:19,sec:'D · Laboratory findings', type:'number', q:'Parasite density', min:0},
+  /* SECTION D — LABORATORY FINDINGS
+     Gate: which diagnostic test was used. RDT-only records skip every
+     microscopy item (including parasite density, which is a microscopy
+     read-out and cannot be obtained from an RDT), and vice versa. */
+  {id:'Dtest', sec:'D · Laboratory findings', type:'choice',
+     q:'Which malaria diagnostic test was performed?',
+     help:'Only the questions for the test(s) used will be asked.',
+     options:['RDT only','Microscopy only','Both RDT and microscopy']},
+  {id:'D17',n:17,sec:'D · Laboratory findings', type:'choice', q:'RDT result', options:['Positive','Negative'],
+     when:a=>a.Dtest==='RDT only'||a.Dtest==='Both RDT and microscopy'},
+  {id:'D18',n:18,sec:'D · Laboratory findings', type:'choice', q:'Microscopy result', options:['Positive','Negative'],
+     when:a=>a.Dtest==='Microscopy only'||a.Dtest==='Both RDT and microscopy'},
+  {id:'D19',n:19,sec:'D · Laboratory findings', type:'number', q:'Parasite density', unit:'/µL', min:0,
+     help:'From microscopy.',
+     when:a=>(a.Dtest==='Microscopy only'||a.Dtest==='Both RDT and microscopy')&&a.D18==='Positive'},
   {id:'D20',n:20,sec:'D · Laboratory findings', type:'number', q:'Haemoglobin', unit:'g/dL', min:0, dec:true},
   {id:'D21',n:21,sec:'D · Laboratory findings', type:'number', q:'Blood glucose', unit:'mmol/L', min:0, dec:true},
   {id:'D22',n:22,sec:'D · Laboratory findings', type:'textarea', q:'Other lab findings', optional:true, ph:'Optional'},
@@ -817,6 +828,13 @@ function runFlags(){
     const v=parseFloat(ans[f.id]);
     el.innerHTML=(!isNaN(v)&&f.test(v))?`<div class="flag ${f.cls}">${esc(f.msg)}</div>`:'';
   });
+  /* Inclusion requires a POSITIVE parasitological test (RDT or microscopy). */
+  ['D17','D18'].forEach(id=>{
+    const el=document.getElementById('fl_'+id); if(!el) return;
+    el.innerHTML=(ans[id]==='Negative')
+      ? `<div class="flag warn">A negative result. Inclusion requires a positive malaria test (RDT or microscopy).</div>` : '';
+  });
+
   /* a case should have at least one WHO sign (advisory only) */
   const el=document.getElementById('fl_C16');
   if(el&&isCase(ans)){
