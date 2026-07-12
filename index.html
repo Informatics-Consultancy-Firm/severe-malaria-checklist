@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Severe Malaria Study — Data Collection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-50:#f2f8fd; --sky-100:#e3f1fb; --sky-200:#c9e4f7; --sky-300:#9ed0f0;
+    --sky-400:#6ab6e6; --sky-500:#3d9ad6; --sky-600:#2680bd; --sky-700:#1b6499;
+    --ink:#14344d; --muted:#5f7f96; --line:#dceaf5; --white:#fff;
+    --ok:#2aa17c; --ok-bg:#e6f6f1; --bad:#d95468; --bad-bg:#fceaed;
+    --warn:#e0a100; --warn-bg:#fff7e0;
+    --sh-sm:0 2px 8px rgba(38,128,189,.08);
+    --sh-md:0 10px 30px rgba(38,128,189,.14);
+    --sh-lg:0 26px 60px rgba(38,128,189,.22);
+    --disp:'Oswald',system-ui,sans-serif; --body:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:var(--body);color:var(--ink);background:var(--sky-50);display:flex;align-items:center;justify-content:center;padding:20px;}
+  .phone{width:410px;max-width:100%;height:880px;max-height:96vh;background:#0c2740;border-radius:46px;padding:12px;box-shadow:var(--sh-lg);}
+  .screen{position:relative;width:100%;height:100%;background:var(--white);border-radius:36px;overflow:hidden;}
+  #app{position:absolute;inset:0;display:flex;flex-direction:column;}
+  @media (max-width:540px){body{padding:0;}.phone{width:100%;height:100vh;max-height:none;border-radius:0;padding:0;}.screen{border-radius:0;}}
+
+  .appbar{flex:0 0 auto;background:var(--sky-100);color:var(--sky-700);padding:15px 16px 13px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--sky-200);}
+  .ico-btn{width:38px;height:38px;border:none;border-radius:12px;background:var(--white);color:var(--sky-600);display:grid;place-items:center;cursor:pointer;box-shadow:var(--sh-sm);flex:0 0 auto;}
+  .ico-btn:active{transform:scale(.94);}
+  .titles{min-width:0;flex:1;}
+  .eyebrow{font:600 10px/1 var(--body);letter-spacing:.15em;text-transform:uppercase;color:var(--sky-500);}
+  .title{font:600 16.5px/1.15 var(--disp);letter-spacing:.02em;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tag-pill{font:700 9.5px/1 var(--body);letter-spacing:.06em;padding:6px 8px;border-radius:7px;flex:0 0 auto;}
+  .tag-pill.case{background:var(--bad-bg);color:var(--bad);}
+  .tag-pill.ctrl{background:var(--ok-bg);color:var(--ok);}
+
+  .progress-wrap{flex:0 0 auto;background:var(--sky-100);padding:0 16px 11px;}
+  .progress-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .progress-row .step{font:600 11px/1 var(--body);color:var(--sky-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .progress-row .pct{font:600 11px/1 var(--body);color:var(--sky-500);flex:0 0 auto;padding-left:8px;}
+  .track{height:6px;background:var(--white);border-radius:99px;overflow:hidden;}
+  .fill{height:100%;width:0;background:linear-gradient(90deg,var(--sky-400),var(--sky-600));border-radius:99px;transition:width .35s cubic-bezier(.4,0,.2,1);}
+
+  .body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .footer{flex:0 0 auto;background:var(--sky-100);border-top:1px solid var(--sky-200);padding:13px 16px calc(15px + env(safe-area-inset-bottom));display:flex;gap:10px;}
+
+  .btn{font:600 15px/1 var(--body);border:none;border-radius:14px;padding:15px 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .08s,box-shadow .2s;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--sky-600);color:#fff;box-shadow:0 6px 16px rgba(38,128,189,.3);flex:1;}
+  .btn-primary:disabled{background:var(--sky-200);color:#fff;box-shadow:none;cursor:not-allowed;}
+  .btn-ghost{background:var(--white);color:var(--sky-600);box-shadow:var(--sh-sm);}
+  .btn-danger{background:var(--bad-bg);color:var(--bad);box-shadow:none;}
+  .btn-block{width:100%;}
+  .btn-sm{padding:12px 14px;font-size:13.5px;}
+
+  /* home */
+  .hero{background:linear-gradient(160deg,var(--sky-500),var(--sky-700));color:#fff;padding:28px 22px 32px;border-bottom-left-radius:30px;border-bottom-right-radius:30px;position:relative;overflow:hidden;}
+  .hero::after{content:"";position:absolute;right:-60px;top:-70px;width:210px;height:210px;border-radius:50%;background:rgba(255,255,255,.10);}
+  .hero::before{content:"";position:absolute;right:20px;bottom:-80px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07);}
+  .hero .logo{position:relative;display:block;height:52px;width:auto;max-width:205px;background:#fff;border-radius:10px;padding:6px 10px;box-shadow:0 4px 14px rgba(0,0,0,.18);margin-bottom:2px;}
+  .bar-logo{height:31px;width:auto;max-width:98px;flex:0 0 auto;background:#fff;border-radius:7px;padding:3px 6px;box-shadow:var(--sh-sm);}
+  .hero h1{font:600 24px/1.18 var(--disp);margin:14px 0 8px;position:relative;}
+  .hero p{font:400 12.5px/1.5 var(--body);color:rgba(255,255,255,.9);max-width:32ch;position:relative;}
+  .home-inner{padding:20px 18px 26px;}
+
+  .quota{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:16px;box-shadow:var(--sh-sm);}
+  .quota h4{font:600 12px var(--body);color:var(--ink);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .quota h4 .dot{width:8px;height:8px;border-radius:50%;background:var(--sky-500);}
+  .qrow{margin-bottom:11px;}
+  .qrow:last-child{margin-bottom:0;}
+  .qtop{display:flex;justify-content:space-between;margin-bottom:5px;}
+  .qtop .k{font:500 12px var(--body);}
+  .qtop .v{font:600 12px var(--body);color:var(--muted);}
+  .qtrack{height:8px;background:var(--sky-50);border-radius:99px;overflow:hidden;}
+  .qfill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.2,.7,.2,1);}
+  .qfill.case{background:linear-gradient(90deg,#e88b99,var(--bad));}
+  .qfill.ctrl{background:linear-gradient(90deg,#66c4a8,var(--ok));}
+  .quota h4{display:flex;align-items:center;}
+  .hosp-split{margin-top:13px;padding-top:11px;border-top:1px dashed var(--line);}
+  .hs{display:flex;justify-content:space-between;align-items:center;padding:4px 0;}
+  .hs .hn{font:700 10.5px var(--disp);letter-spacing:.06em;color:var(--sky-600);}
+  .hs .hv{font:500 11px var(--body);color:var(--muted);}
+  .hs-key{font:400 9.5px var(--body);color:var(--sky-300);margin-top:5px;text-align:right;}
+
+  .section-eyebrow{font:600 11px/1 var(--body);letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin:0 0 11px 2px;}
+  .action-card{display:flex;align-items:center;gap:15px;width:100%;text-align:left;background:var(--white);border:1px solid var(--line);border-radius:18px;padding:17px;margin-bottom:12px;cursor:pointer;box-shadow:var(--sh-sm);transition:transform .12s,box-shadow .2s;}
+  .action-card:active{transform:scale(.98);}
+  .action-card:hover{box-shadow:var(--sh-md);}
+  .action-card .ic{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;flex:0 0 auto;}
+  .action-card .ic.b{background:var(--sky-100);color:var(--sky-600);}
+  .action-card .ic.g{background:var(--ok-bg);color:var(--ok);}
+  .action-card .ic.y{background:var(--warn-bg);color:#b8860b;}
+  .action-card .tx{flex:1;min-width:0;}
+  .action-card .tx h3{font:600 16.5px/1.1 var(--disp);margin-bottom:3px;}
+  .action-card .tx span{font:400 12px/1.4 var(--body);color:var(--muted);}
+  .action-card .arrow{color:var(--sky-300);flex:0 0 auto;}
+
+  /* form */
+  .form{padding:18px 16px 26px;}
+  .inst-banner{border-radius:16px;padding:15px 16px;margin-bottom:14px;color:#fff;}
+  .inst-banner.i1{background:linear-gradient(160deg,var(--sky-500),var(--sky-700));}
+  .inst-banner.i2{background:linear-gradient(160deg,#5aa8bf,#1b6499);}
+  .inst-banner .n{font:600 10px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;opacity:.85;}
+  .inst-banner h2{font:600 18px/1.2 var(--disp);margin:6px 0 4px;}
+  .inst-banner p{font:400 11.5px/1.45 var(--body);opacity:.92;}
+
+  .q-card{background:var(--white);border:1px solid var(--line);border-radius:15px;padding:15px;margin-bottom:11px;box-shadow:var(--sh-sm);scroll-margin-top:14px;transition:border-color .15s,box-shadow .15s;}
+  .q-card.missing{border-color:var(--bad);box-shadow:0 0 0 3px rgba(217,84,104,.13);}
+  .q-card.skipped{opacity:.5;}
+  .q-no{display:inline-block;font:700 10px/1 var(--body);letter-spacing:.08em;color:var(--sky-600);background:var(--sky-50);border:1px solid var(--sky-200);padding:5px 8px;border-radius:6px;margin-bottom:9px;}
+  .q-txt{font:500 15px/1.32 var(--body);color:var(--ink);margin-bottom:4px;}
+  .q-txt .req{color:var(--bad);margin-left:2px;}
+  .q-help{font:400 11.5px/1.45 var(--body);color:var(--muted);margin-bottom:11px;}
+  .q-card .q-txt+.opts,.q-card .q-txt+.field,.q-card .q-txt+.chips{margin-top:11px;}
+
+  .skip-note{font:400 11.5px/1.45 var(--body);color:var(--sky-700);background:var(--sky-50);border:1px dashed var(--sky-300);border-radius:10px;padding:9px 11px;}
+
+  .opts{display:flex;flex-direction:column;gap:8px;}
+  .opt{display:flex;align-items:center;gap:11px;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--white);cursor:pointer;font:500 14px/1.3 var(--body);color:var(--ink);transition:.13s;}
+  .opt:hover{border-color:var(--sky-300);}
+  .opt .mark{width:20px;height:20px;border-radius:50%;border:2px solid var(--sky-200);flex:0 0 auto;display:grid;place-items:center;}
+  .opt .mark::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--sky-600);transform:scale(0);transition:transform .15s;}
+  .opt.sel{border-color:var(--sky-500);background:var(--sky-50);box-shadow:0 0 0 3px rgba(61,154,214,.12);}
+  .opt.sel .mark{border-color:var(--sky-600);}
+  .opt.sel .mark::after{transform:scale(1);}
+  .opt.yes.sel{border-color:var(--ok);background:var(--ok-bg);box-shadow:0 0 0 3px rgba(42,161,124,.12);}
+  .opt.yes.sel .mark{border-color:var(--ok);} .opt.yes.sel .mark::after{background:var(--ok);}
+  .opt.no.sel{border-color:var(--bad);background:var(--bad-bg);box-shadow:0 0 0 3px rgba(217,84,104,.12);}
+  .opt.no.sel .mark{border-color:var(--bad);} .opt.no.sel .mark::after{background:var(--bad);}
+
+  /* multi-select chips */
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{display:inline-flex;align-items:center;gap:7px;padding:10px 12px;border:1.5px solid var(--line);border-radius:11px;background:var(--white);cursor:pointer;font:500 13px/1.2 var(--body);color:var(--ink);transition:.13s;}
+  .chip:hover{border-color:var(--sky-300);}
+  .chip .bx{width:16px;height:16px;border-radius:5px;border:2px solid var(--sky-200);flex:0 0 auto;display:grid;place-items:center;}
+  .chip .bx svg{opacity:0;transform:scale(.5);transition:.15s;}
+  .chip.sel{border-color:var(--sky-500);background:var(--sky-50);box-shadow:0 0 0 3px rgba(61,154,214,.1);}
+  .chip.sel .bx{background:var(--sky-600);border-color:var(--sky-600);}
+  .chip.sel .bx svg{opacity:1;transform:scale(1);}
+  .chip.none.sel{border-color:var(--muted);background:#eef2f5;box-shadow:none;}
+  .chip.none.sel .bx{background:var(--muted);border-color:var(--muted);}
+
+  .field input,.field select,.field textarea{width:100%;font:500 15px var(--body);color:var(--ink);padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--white);outline:none;transition:.15s;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--sky-500);box-shadow:0 0 0 3px rgba(61,154,214,.13);}
+  .field input[readonly]{background:var(--sky-50);font-family:var(--disp);letter-spacing:.05em;color:var(--sky-700);font-size:17px;}
+  .field textarea{resize:vertical;min-height:74px;font-size:14px;}
+  .unit{position:relative;}
+  .unit .u{position:absolute;right:13px;top:50%;transform:translateY(-50%);font:600 12px var(--body);color:var(--muted);pointer-events:none;}
+  .unit input{padding-right:52px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .other-box{margin-top:9px;}
+  .other-box input{width:100%;font:500 14px var(--body);padding:12px 13px;border:1.5px solid var(--sky-300);border-radius:11px;outline:none;}
+  .sub-lbl{font:600 11px var(--body);color:var(--muted);margin:11px 0 6px;}
+  .flag{margin-top:9px;font:500 11.5px/1.4 var(--body);padding:8px 10px;border-radius:9px;}
+  .flag.warn{background:var(--warn-bg);color:#8a6d00;border:1px solid #f0dda0;}
+  .flag.bad{background:var(--bad-bg);color:var(--bad);border:1px solid #f2ccd2;}
+  .flag.ok{background:var(--ok-bg);color:var(--ok);border:1px solid #bfe6d6;}
+
+  /* review + done */
+  .rv{padding:18px 16px 26px;}
+  .rv-head{background:linear-gradient(160deg,var(--sky-500),var(--sky-700));color:#fff;border-radius:16px;padding:16px;margin-bottom:14px;}
+  .rv-head .id{font:700 20px var(--disp);letter-spacing:.05em;}
+  .rv-head .meta{font:400 11.5px var(--body);opacity:.9;margin-top:4px;}
+  .rv-sec{font:600 10.5px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--sky-600);margin:16px 2px 8px;}
+  .rv-item{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);}
+  .rv-item .q{font:400 12px/1.35 var(--body);color:var(--muted);flex:1;}
+  .rv-item .a{font:600 12.5px/1.35 var(--body);color:var(--ink);text-align:right;flex:0 0 44%;word-break:break-word;}
+  .rv-item .a.empty{color:var(--bad);font-weight:500;}
+
+  .done{padding:52px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;}
+  .done .circle{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;margin-bottom:22px;background:var(--ok-bg);color:var(--ok);animation:pop .5s cubic-bezier(.2,.8,.2,1);}
+  @keyframes pop{0%{transform:scale(.4);opacity:0;}60%{transform:scale(1.08);}100%{transform:scale(1);opacity:1;}}
+  .done h2{font:600 23px/1.2 var(--disp);margin-bottom:8px;}
+  .done .idbig{font:700 18px var(--disp);letter-spacing:.05em;color:var(--sky-600);margin-bottom:10px;}
+  .done p{font:400 13px/1.55 var(--body);color:var(--muted);max-width:30ch;margin-bottom:14px;}
+  .done .sync{font:600 12px var(--body);padding:6px 12px;border-radius:99px;margin-bottom:20px;}
+  .done .sync.on{background:var(--ok-bg);color:var(--ok);}
+  .done .sync.checking{background:var(--sky-50);color:var(--sky-600);}
+  .done .sync.warn{background:var(--warn-bg);color:#b8860b;}
+  .done .actions{width:100%;display:flex;flex-direction:column;gap:10px;}
+
+  /* lists + dash */
+  .list{padding:18px 16px 28px;}
+  .list h2{font:600 20px/1 var(--disp);}
+  .sub{font:400 12px/1.4 var(--body);color:var(--muted);margin:6px 0 13px;}
+  .card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:13px;box-shadow:var(--sh-sm);}
+  .card h4{font:600 12.5px var(--body);margin-bottom:13px;display:flex;align-items:center;gap:8px;}
+  .card h4 .dot{width:8px;height:8px;border-radius:50%;background:var(--sky-500);}
+  .li{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);}
+  .li:last-child{border-bottom:none;}
+  .li .av{width:44px;height:44px;border-radius:12px;background:var(--sky-50);color:var(--sky-600);display:grid;place-items:center;font:600 10.5px var(--disp);flex:0 0 auto;letter-spacing:.03em;}
+  .li .m{flex:1;min-width:0;}
+  .li .m .t{font:600 13px var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .li .m .s{font:400 11px var(--body);color:var(--muted);margin-top:2px;}
+  .pill{font:600 9.5px/1 var(--body);padding:6px 8px;border-radius:99px;flex:0 0 auto;letter-spacing:.04em;}
+  .pill.case{background:var(--bad-bg);color:var(--bad);}
+  .pill.ctrl{background:var(--ok-bg);color:var(--ok);}
+  .seg{display:flex;background:var(--sky-50);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:13px;}
+  .seg button{flex:1;border:none;background:transparent;font:600 11.5px var(--body);color:var(--muted);padding:9px 4px;border-radius:9px;cursor:pointer;}
+  .seg button.on{background:var(--white);color:var(--sky-700);box-shadow:var(--sh-sm);}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:16px;}
+  .stat{background:var(--white);border:1px solid var(--line);border-radius:15px;padding:14px;box-shadow:var(--sh-sm);}
+  .stat .n{font:700 25px/1 var(--disp);color:var(--sky-600);}
+  .stat .n.r{color:var(--bad);} .stat .n.g{color:var(--ok);}
+  .stat .l{font:500 11px/1.3 var(--body);color:var(--muted);margin-top:6px;}
+  .bar-row{margin-bottom:10px;}
+  .bar-top{display:flex;justify-content:space-between;margin-bottom:4px;}
+  .bar-top .k{font:500 11.5px var(--body);}
+  .bar-top .v{font:600 11.5px var(--body);color:var(--muted);}
+  .bar-track{height:8px;background:var(--sky-50);border-radius:99px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--sky-400),var(--sky-600));}
+  .bar-fill.r{background:linear-gradient(90deg,#e88b99,var(--bad));}
+  .empty{text-align:center;padding:42px 18px;}
+  .empty .ic{width:74px;height:74px;margin:0 auto 16px;border-radius:22px;background:var(--sky-50);color:var(--sky-300);display:grid;place-items:center;}
+  .empty h3{font:600 17px var(--disp);margin-bottom:8px;}
+  .empty p{font:400 12.5px/1.5 var(--body);color:var(--muted);max-width:27ch;margin:0 auto 20px;}
+  .spin{width:32px;height:32px;border:3px solid var(--sky-100);border-top-color:var(--sky-500);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+  .tools{display:flex;gap:9px;margin-top:5px;}
+  .tools .btn{flex:1;font-size:12.5px;padding:12px 6px;}
+  .toast{position:absolute;left:50%;bottom:94px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font:500 12.5px var(--body);padding:11px 17px;border-radius:12px;box-shadow:var(--sh-md);opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:88%;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .draft{display:flex;align-items:center;gap:10px;background:var(--warn-bg);border:1px solid #f0dda0;border-radius:14px;padding:12px 14px;margin-bottom:14px;}
+  .draft .t{flex:1;font:500 12px/1.4 var(--body);color:#8a6d00;}
+</style>
+</head>
+<body>
+<div class="phone"><div class="screen">
+  <div id="app"></div>
+  <div class="toast" id="toast"></div>
+</div></div>
+
+<script>
+/* =========================================================
+   CONFIG — paste the Google Apps Script /exec URL here, or
+   use "Connect Google Sheet" on the home screen.
+   ========================================================= */
+let GAS_URL = "https://script.google.com/macros/s/AKfycbyDHGVVMJPrVelkAFqVpH9Nn4wL_waadAX0CwSonvnElw5bH0i6P98SYt0wo1G2FYBQ/exec";
+
+/* =========================================================
+   LOGO — ICF-SL, embedded as base64 so it renders offline.
+   Replace the data: string below to change it.
+   ========================================================= */
+const LOGO = "data:image/jpeg;base64,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";
+
+/* ---------- storage ---------- */
+const Store=(()=>{let ok=false,mem={};try{localStorage.setItem('__t','1');localStorage.removeItem('__t');ok=true;}catch(e){}
+ return{get(k,d){if(ok){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}return k in mem?mem[k]:d;},
+        set(k,v){if(ok){try{localStorage.setItem(k,JSON.stringify(v));return;}catch(e){}}mem[k]=v;},
+        del(k){if(ok){try{localStorage.removeItem(k);return;}catch(e){}}delete mem[k];}};})();
+const REC_KEY='sm_records_v1', URL_KEY='sm_gas_url_v1', ME_KEY='sm_interviewer_v1', DRAFT_KEY='sm_draft_v1';
+let records=Store.get(REC_KEY,[]);
+GAS_URL=Store.get(URL_KEY,GAS_URL)||GAS_URL;
+let interviewer=Store.get(ME_KEY,'');
+
+/* =========================================================
+   STUDY CONSTANTS
+   ========================================================= */
+const HOSPITALS=[
+  {name:"Ola During Children's Hospital", code:'ODCH', district:'Western Area Urban', cases:43, controls:86},
+  {name:'Bo Government Hospital',         code:'BGH',  district:'Bo',                 cases:32, controls:64},
+  {name:'Koidu Government Hospital',      code:'KGH',  district:'Kono',               cases:22, controls:44},
+  {name:'Magburaka Government Hospital',  code:'MGH',  district:'Tonkolili',          cases:18, controls:36}
+];
+const DISTRICTS=['Bo','Bombali','Bonthe','Falaba','Kailahun','Kambia','Karene','Kenema','Koinadugu','Kono',
+                 'Moyamba','Port Loko','Pujehun','Tonkolili','Western Area Rural','Western Area Urban'];
+function hospDistrict(name){ const h=HOSPITALS.find(x=>x.name===name); return h?h.district:''; }
+const WHO_SIGNS=['Severe anaemia','Convulsions','Prostration','Coma','Respiratory distress','Hypoglycaemia','Shock','Jaundice','Haemoglobinuria'];
+
+/* =========================================================
+   INSTRUMENTS
+   type: choice | multi | number | text | date | time | textarea | auto | note
+   when: a=>bool   -> skip logic (question hidden + cleared when false)
+   ========================================================= */
+const SCREENING=[
+  /* CRF header line, verbatim:
+     Study ID ___  Hospital ___  Date & Time of Enrolment ___  Interviewer/Clinician ___
+     "Study group" is the one addition — the study is case-control, so both
+     instruments need to know which arm the child is in. */
+  {id:'hospital',   sec:'Enrolment', type:'choice', q:'Hospital', options:HOSPITALS.map(h=>h.name)},
+  {id:'group',      sec:'Enrolment', type:'choice', q:'Study group',
+     help:'Case = admitted with WHO-confirmed severe malaria. Control = OPD, parasitologically confirmed, no severe criteria.',
+     options:['Case (severe malaria, admitted)','Control (uncomplicated, OPD)']},
+  {id:'studyId',    sec:'Enrolment', type:'auto',   q:'Study ID', help:'Generated from the hospital, group and sequence on this device.'},
+  {id:'enrolDate',  sec:'Enrolment', type:'date',   q:'Date of enrolment'},
+  {id:'enrolTime',  sec:'Enrolment', type:'time',   q:'Time of enrolment'},
+  {id:'interviewer',sec:'Enrolment', type:'text',   q:'Interviewer / Clinician', ph:'Full name'}
+];
+
+/* ---------- Instrument 1: Prospective Structured Case Report Form ----------
+   Follows the printed CRF exactly: same items, same order, same response
+   options, and the form's own numbering (which restarts at 9 in Section C
+   and leaves the Parenteral Total Dose row unnumbered).
+   The only skip logic is the logic the form itself implies:
+   Q24 (oral dose) and Q25/Parenteral dose depend on Q23. */
+const CRF=[
+  /* SECTION A — CHILD IDENTIFICATION AND DEMOGRAPHICS */
+  {id:'A1', n:1, sec:'A · Child identification and demographics', type:'text',   q:'Child initials / code', ph:'___________'},
+  {id:'A2', n:2, sec:'A · Child identification and demographics', type:'number', q:'Age in months', unit:'months', min:0},
+  {id:'A3', n:3, sec:'A · Child identification and demographics', type:'choice', q:'Sex', options:['Male','Female']},
+  {id:'A4a',n:4, sec:'A · Child identification and demographics', type:'autofill', q:'Residence — District',
+     help:'Set automatically from the hospital.', from:a=>hospDistrict(a.hospital)},
+  {id:'A4b',n:4, sec:'A · Child identification and demographics', type:'text',   q:'Residence — Community', ph:'Community'},
+  {id:'A4c',n:4, sec:'A · Child identification and demographics', type:'choice', q:'Residence', options:['Urban','Rural']},
+  {id:'A5', n:5, sec:'A · Child identification and demographics', type:'choice', q:'Referral mode',
+     options:['Direct / walk-in','Referred from CHW','Referred from PHU','Referred from hospital']},
+
+  /* SECTION B — HISTORY OF PRESENT ILLNESS */
+  {id:'B6', n:6, sec:'B · History of present illness', type:'date',   q:'Date of fever onset'},
+  {id:'B7', n:7, sec:'B · History of present illness', type:'multi',  q:'Other symptoms before admission',
+     help:'Tick all that apply.',
+     options:['Vomiting','Convulsions','Difficulty breathing','Poor feeding','Lethargy','Unconsciousness','Diarrhoea'], other:true},
+  {id:'B8', n:8, sec:'B · History of present illness', type:'number', q:'Days ill before admission', unit:'days', min:0},
+  {id:'B9v',n:9, sec:'B · History of present illness', type:'multi',  q:'Vaccination history — Malaria vaccine doses',
+     help:'Tick each dose received.', options:['Dose 1','Dose 2','Dose 3','Dose 4'], none:'None received', optional:true},
+  {id:'B9p',n:9, sec:'B · History of present illness', type:'multi',  q:'Vaccination/PMC history — PMC doses',
+     help:'Tick each dose received.', options:['Dose 1','Dose 2','Dose 3','Dose 4','Dose 5','Dose 6'], none:'None received', optional:true},
+
+  /* SECTION C — ADMISSION ASSESSMENT  (the form restarts numbering at 9 here) */
+  {id:'C9', n:9, sec:'C · Admission assessment', type:'number', q:'Weight', unit:'kg', min:0, dec:true},
+  {id:'C10',n:10,sec:'C · Admission assessment', type:'number', q:'Height / length', unit:'cm', min:0, dec:true},
+  {id:'C11',n:11,sec:'C · Admission assessment', type:'number', q:'MUAC', unit:'cm', min:0, dec:true},
+  {id:'C12',n:12,sec:'C · Admission assessment', type:'number', q:'Temperature', unit:'°C', min:0, dec:true},
+  {id:'C13',n:13,sec:'C · Admission assessment', type:'number', q:'Respiratory rate', unit:'breaths/min', min:0},
+  {id:'C14',n:14,sec:'C · Admission assessment', type:'number', q:'Heart rate', unit:'beats/min', min:0},
+  {id:'C15',n:15,sec:'C · Admission assessment', type:'number', q:'Oxygen saturation', unit:'%', min:0, max:100},
+  {id:'C16',n:16,sec:'C · Admission assessment', type:'multi',  q:'Severe malaria signs present',
+     help:'Tick all that apply.', options:WHO_SIGNS, other:true, none:'None present'},
+
+  /* SECTION D — LABORATORY FINDINGS */
+  {id:'D17',n:17,sec:'D · Laboratory findings', type:'choice', q:'RDT result', options:['Positive','Negative']},
+  {id:'D18',n:18,sec:'D · Laboratory findings', type:'choice', q:'Microscopy result', options:['Positive','Negative']},
+  {id:'D19',n:19,sec:'D · Laboratory findings', type:'number', q:'Parasite density', min:0},
+  {id:'D20',n:20,sec:'D · Laboratory findings', type:'number', q:'Haemoglobin', unit:'g/dL', min:0, dec:true},
+  {id:'D21',n:21,sec:'D · Laboratory findings', type:'number', q:'Blood glucose', unit:'mmol/L', min:0, dec:true},
+  {id:'D22',n:22,sec:'D · Laboratory findings', type:'textarea', q:'Other lab findings', optional:true, ph:'Optional'},
+
+  /* SECTION E — TREATMENT AND MONITORING */
+  {id:'E23',n:23,sec:'E · Treatment and monitoring', type:'choice', q:'Antimalarial started', options:['Oral','Parenteral']},
+  {id:'E24',n:24,sec:'E · Treatment and monitoring', type:'text',   q:'Oral — total dose', ph:'Total dose',
+     when:a=>a.E23==='Oral'},
+  {id:'E25',n:25,sec:'E · Treatment and monitoring', type:'choice', q:'Parenteral — route of administration',
+     options:['IV','IM'], when:a=>a.E23==='Parenteral'},
+  {id:'E25b',   sec:'E · Treatment and monitoring', type:'text',   q:'Parenteral — total dose', ph:'Total dose',
+     when:a=>a.E23==='Parenteral'},
+  {id:'E26',n:26,sec:'E · Treatment and monitoring', type:'time',   q:'Time first dose given'},
+  {id:'E27',n:27,sec:'E · Treatment and monitoring', type:'multi',  q:'Supportive treatment given',
+     help:'Tick all that apply.',
+     options:['Blood transfusion','IV fluids','Antibiotics','Anticonvulsants','Oxygen','Glucose','Antipyretics'], other:true},
+  {id:'E28',n:28,sec:'E · Treatment and monitoring', type:'progress',
+     q:'Daily progress notes — Days 1 to 5',
+     help:'General wellbeing, parasite density and haemoglobin for each day. Leave later days blank if not applicable.',
+     optional:true},
+
+  /* SECTION F — OUTCOME */
+  {id:'F29',n:29,sec:'F · Outcome', type:'choice', q:'Outcome', options:['Recovered','Died','Referred','Absconded']},
+  {id:'F30',n:30,sec:'F · Outcome', type:'date',   q:'Date of outcome'},
+  {id:'F31',n:31,sec:'F · Outcome', type:'number', q:'Total length of stay', unit:'days', min:0}
+];
+
+/* ---------- Instrument 2: Caregiver Questionnaire ---------- */
+const CGQ=[
+  {id:'G0', n:0, sec:'Caregiver interview', type:'date', q:'Date of caregiver interview',
+     help:'To be administered within 24–72 hours of admission.'},
+
+  /* A — caregiver */
+  {id:'G1', n:1, sec:'A · Caregiver information', type:'choice', q:'Relationship to child',
+     options:['Mother','Father','Grandparent','Aunty'], other:true},
+  {id:'G2', n:2, sec:'A · Caregiver information', type:'number', q:'Caregiver age', unit:'years', min:10, max:100},
+  {id:'G3', n:3, sec:'A · Caregiver information', type:'choice', q:'Education level',
+     options:['None','Primary','Junior Secondary','Senior Secondary','Tertiary']},
+  {id:'G4', n:4, sec:'A · Caregiver information', type:'text',   q:'Occupation', ph:'e.g. Trader'},
+
+  /* B — household */
+  {id:'G5', n:5, sec:'B · Household / socio-economic', type:'number', q:'Household size', unit:'people', min:1, max:40},
+  {id:'G6', n:6, sec:'B · Household / socio-economic', type:'number', q:'Number of children under five', unit:'children', min:0, max:15},
+  {id:'G7a',n:7, sec:'B · Household / socio-economic', type:'autofill', q:'District',
+     help:'Set automatically from the hospital.', from:a=>hospDistrict(a.hospital)},
+  {id:'G7b',n:7, sec:'B · Household / socio-economic', type:'text',   q:'Community', ph:'Community'},
+  {id:'G7c',n:7, sec:'B · Household / socio-economic', type:'choice', q:'Residence type', options:['Urban','Rural']},
+  {id:'G8', n:8, sec:'B · Household / socio-economic', type:'multi',  q:'Household assets',
+     help:'Tick all that apply.', options:['Radio','Television','Bicycle','Motorcycle','Car','Electricity','Mobile phone'], none:'None of these'},
+  {id:'G9a',n:9, sec:'B · Household / socio-economic', type:'choice', q:'Roof material', options:['Thatch','Iron sheet','Concrete']},
+  {id:'G9b',n:9, sec:'B · Household / socio-economic', type:'choice', q:'Wall material', options:['Mud','Iron sheet','Brick','Cement']},
+  {id:'G9c',n:9, sec:'B · Household / socio-economic', type:'choice', q:'Floor material', options:['Earth','Cement','Tile']},
+
+  /* C — care-seeking */
+  {id:'G10',n:10,sec:'C · Care-seeking behaviour', type:'date',   q:'When did the child first develop fever or symptoms?'},
+  {id:'G11',n:11,sec:'C · Care-seeking behaviour', type:'choice', q:'What was the first action taken?',
+     options:['No action','Home treatment','Traditional remedy','Drug shop / pharmacy','CHW','PHU / Health centre','Hospital']},
+  {id:'G12',n:12,sec:'C · Care-seeking behaviour', type:'choice', q:'First source of care sought',
+     options:['Home','Drug shop / pharmacy','Traditional healer','CHW','Health centre / PHU','Hospital']},
+  {id:'G13',n:13,sec:'C · Care-seeking behaviour', type:'choice', q:'How long after onset of illness was care first sought?',
+     options:['Same day','Next day','2 days','3 or more days']},
+  {id:'G14',n:14,sec:'C · Care-seeking behaviour', type:'multi',  q:'Reasons for delay in seeking care',
+     help:'Asked only when care was not sought on the same day. Tick all that apply.',
+     options:['No money','Distance','No transport','Thought illness was mild','Tried home treatment first','Health facility closed'], other:true,
+     when:a=>a.G13&&a.G13!=='Same day'},
+  {id:'G15',n:15,sec:'C · Care-seeking behaviour', type:'multi', q:'Referral pathway',
+     options:['Self','Traditional Healer','CHW','PHU']},
+  {id:'G16',n:16,sec:'C · Care-seeking behaviour', type:'multi',  q:'Treatment received before hospital arrival',
+     help:'Tick all that apply. Antimalarial = Inj. artemether/artesunate, oral ACT, or rectal artesunate.',
+     options:['Antimalarial','Antibiotic','Herbal / traditional treatment','Antipyretic'],
+     other:true, none:'None'},
+  {id:'G17',n:17,sec:'C · Care-seeking behaviour', type:'choice', q:'Mode of transport to hospital',
+     options:['Walking','Bike','Motorbike','Car','Ambulance'], other:true},
+  {id:'G18',n:18,sec:'C · Care-seeking behaviour', type:'choice', q:'Estimated travel time to hospital',
+     options:['Less than 30 min','30–60 min','1–2 hrs','More than 2 hrs']},
+  {id:'G19',n:19,sec:'C · Care-seeking behaviour', type:'number', q:'Estimated distance to hospital', unit:'km', min:0, max:500, dec:true},
+
+  /* D — prevention */
+  {id:'G20',n:20,sec:'D · Malaria prevention practices', type:'choice', q:'Does the household own a bed net?', options:['Yes','No'], yn:true},
+  {id:'G21',n:21,sec:'D · Malaria prevention practices', type:'choice', q:'Did the child sleep under a bed net the previous night?',
+     options:['Yes','No'], yn:true, when:a=>a.G20==='Yes'},
+  {id:'G22',n:22,sec:'D · Malaria prevention practices', type:'choice', q:'Source of net',
+     options:['ANC','EPI','Mass campaign','School-based distribution (SBD)','Purchase'], when:a=>a.G20==='Yes'},
+  {id:'G23',n:23,sec:'D · Malaria prevention practices', type:'choice', q:'When was the net obtained?',
+     options:['Less than 1 year ago','1–2 years ago','More than 2 years ago',"Don't know"], when:a=>a.G20==='Yes'},
+  {id:'G24',n:24,sec:'D · Malaria prevention practices', type:'choice', q:'Has the household received indoor residual spraying in the past 12 months?',
+     options:['Yes','No',"Don't know"], yn:true},
+  {id:'G25',n:25,sec:'D · Malaria prevention practices', type:'multi',  q:'Ways to prevent malaria',
+     help:'Unprompted. Tick all the caregiver mentions.',
+     options:['Sleep under bed net','Keep surroundings clean','Indoor spraying','Early treatment','Prevent stagnant water'], other:true, none:"Doesn't know any"},
+
+  /* E — nutrition */
+  {id:'G26',n:26,sec:'E · Nutritional history', type:'choice', q:'Is the child currently being breastfed?',
+     options:['Yes','No','Not applicable'], yn:true},
+  {id:'G27',n:27,sec:'E · Nutritional history', type:'choice', q:'Has the child experienced recent weight loss?',
+     options:['Yes','No',"Don't know"], yn:true},
+
+  /* F — environment */
+  {id:'G28',n:28,sec:'F · Environmental factors', type:'choice', q:'Main source of drinking water',
+     options:['Piped water','Well','Borehole','River / stream'], other:true},
+  {id:'G29',n:29,sec:'F · Environmental factors', type:'choice', q:'Toilet facility',
+     options:['Flush toilet','Pit latrine','No facility / open defecation'], other:true},
+  {id:'G30',n:30,sec:'F · Environmental factors', type:'choice', q:'Is there stagnant water near the house?', options:['Yes','No'], yn:true},
+  {id:'G31',n:31,sec:'F · Environmental factors', type:'choice', q:'Does the household engage in backyard or animal farming?', options:['Yes','No'], yn:true},
+  {id:'G32',n:32,sec:'F · Environmental factors', type:'textarea', q:'Additional comments', optional:true, ph:'Optional'}
+];
+
+const ALL=SCREENING.concat(CRF).concat(CGQ);
+const byId=id=>ALL.find(q=>q.id===id);
+function isCase(a){ return String(a.group||'').indexOf('Case')===0; }
+function isControl(a){ return String(a.group||'').indexOf('Control')===0; }
+
+/* ---- pages: screening, then one page per section ---- */
+function pages(){
+  const p=[{key:'screen', title:'Enrolment & eligibility', items:SCREENING}];
+  const push=(list,inst)=>{
+    let cur=null;
+    list.forEach(q=>{
+      if(!cur||cur.title!==q.sec){ cur={key:q.sec, title:q.sec, items:[], inst:inst}; p.push(cur); }
+      cur.items.push(q);
+    });
+  };
+  push(CRF,1); push(CGQ,2);
+  return p;
+}
+const PAGES=pages();
+
+/* ---------- state ---------- */
+const app=document.getElementById('app');
+let ans={}, pg=0;
+let dashData=[], dashSrc='device', dashLoading=false, dashF='all';
+let listF='all', detail=-1;
+
+const I={
+ home:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
+ back:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>',
+ clip:'<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 10h6M9 14h6"/></svg>',
+ list:'<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1.3"/><circle cx="4" cy="12" r="1.3"/><circle cx="4" cy="18" r="1.3"/></svg>',
+ chart:'<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20h16"/><rect x="6" y="11" width="3" height="6" rx="1"/><rect x="11" y="7" width="3" height="10" rx="1"/><rect x="16" y="13" width="3" height="4" rx="1"/></svg>',
+ arrow:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
+ check:'<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>',
+ tick:'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>',
+ refresh:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>',
+ cloud:'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M17 18a4 4 0 0 0 .5-7.97A6 6 0 0 0 6 9a4.5 4.5 0 0 0 .5 9H17z"/></svg>',
+ empty:'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4"/></svg>'
+};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const nowHM=()=>new Date().toTimeString().slice(0,5);
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200);}
+
+function hospCode(name){const h=HOSPITALS.find(x=>x.name===name);return h?h.code:'XXX';}
+/* Sequence counts the sheet (all devices) where available, falling back to
+   this device when offline, so two phones at the same hospital don't both
+   mint -001. The server also de-duplicates on write. */
+function genStudyId(a){
+  if(!a.hospital||!a.group) return '';
+  const code=hospCode(a.hospital), g=isCase(a)?'CA':'CO', wantCase=isCase(a);
+  const live = (liveCounts&&liveCounts!=='error')
+    ? dashData.filter(r=>r.hospital===a.hospital && (String(r._group)==='Case')===wantCase).length : 0;
+  const local = records.filter(r=>r.hospital===a.hospital && isCase(r)===wantCase).length;
+  const seq=Math.max(live,local)+1;
+  return code+'-'+g+'-'+String(seq).padStart(3,'0');
+}
+
+/* ---------- visibility + validation ---------- */
+function visible(q){ return !q.when || q.when(ans); }
+function answered(q){
+  if(q.optional||q.type==='auto'||q.type==='note'||q.type==='progress') return true;
+  if(q.type==='autofill') return !!String(q.from(ans)||'').trim();
+  const v=ans[q.id];
+  if(q.type==='multi'){
+    const arr=Array.isArray(v)?v:[];
+    if(!arr.length) return false;
+    if(q.other&&arr.indexOf('Other')>-1&&!String(ans[q.id+'_other']||'').trim()) return false;
+    return true;
+  }
+  if(v===undefined||v===null||String(v).trim()==='') return false;
+  if(q.other&&v==='Other'&&!String(ans[q.id+'_other']||'').trim()) return false;
+  return true;
+}
+function pageItems(i){ return PAGES[i].items.filter(visible); }
+function pageDone(i){ return pageItems(i).every(answered); }
+
+/* =========================================================
+   HOME
+   ========================================================= */
+/* Recruitment totals come from Google Sheets (all sites, all devices), not
+   from this phone. liveCounts is refreshed on every visit to the home screen. */
+let liveCounts=null, countsLoading=false;
+function loadCounts(){
+  if(!GAS_URL){ liveCounts=null; return; }
+  countsLoading=true;
+  fetchLive(rows=>{
+    countsLoading=false;
+    if(rows&&Array.isArray(rows)){
+      dashData=rows; dashSrc='live';
+      liveCounts={
+        cases: rows.filter(r=>String(r._group)==='Case').length,
+        ctrls: rows.filter(r=>String(r._group)==='Control').length,
+        byHosp: HOSPITALS.map(h=>({
+          h:h,
+          cases: rows.filter(r=>r.hospital===h.name&&String(r._group)==='Case').length,
+          ctrls: rows.filter(r=>r.hospital===h.name&&String(r._group)==='Control').length
+        }))
+      };
+    } else { liveCounts='error'; }
+    if(document.querySelector('.quota')) renderHome();
+  });
+}
+function renderHome(){
+  const draft=Store.get(DRAFT_KEY,null);
+  if(liveCounts===null&&!countsLoading&&GAS_URL) loadCounts();
+  const live = liveCounts&&liveCounts!=='error' ? liveCounts : null;
+  const cases = live?live.cases:0, ctrls = live?live.ctrls:0;
+  const tCase=115, tCtrl=230;
+  const srcNote = countsLoading ? 'Loading from Google Sheets…'
+                : live          ? 'Live · all sites · Google Sheets'
+                : GAS_URL       ? 'Could not reach Google Sheets — tap to retry'
+                                : 'Not connected to Google Sheets';
+  app.innerHTML=`<div class="body">
+    <div class="hero">
+      <img class="logo" src="${LOGO}" alt="ICF-SL">
+      <h1>Severe Malaria in Children Under Five</h1>
+      <p>Hospital-based case–control study across four hospitals in Sierra Leone, 2024–2026.</p>
+    </div>
+    <div class="home-inner">
+      ${draft?`<div class="draft">
+        <div class="t"><b>Unfinished record.</b><br>${esc(draft.ans.studyId||'Enrolment in progress')} — ${esc(PAGES[draft.pg]?PAGES[draft.pg].title:'')}</div>
+        <button class="btn btn-primary btn-sm" style="flex:0 0 auto" onclick="resumeDraft()">Resume</button>
+      </div>`:''}
+      <div class="quota" onclick="loadCounts();renderHome()" style="cursor:pointer">
+        <h4><span class="dot"></span>Recruitment progress
+          <span style="margin-left:auto;font:500 10px var(--body);color:var(--muted)">${esc(srcNote)}</span></h4>
+        <div class="qrow"><div class="qtop"><span class="k">Cases</span><span class="v">${cases} / ${tCase}</span></div>
+          <div class="qtrack"><div class="qfill case" style="width:${Math.min(100,cases/tCase*100)}%"></div></div></div>
+        <div class="qrow"><div class="qtop"><span class="k">Controls</span><span class="v">${ctrls} / ${tCtrl}</span></div>
+          <div class="qtrack"><div class="qfill ctrl" style="width:${Math.min(100,ctrls/tCtrl*100)}%"></div></div></div>
+        ${live?`<div class="hosp-split">${live.byHosp.map(x=>
+          `<div class="hs"><span class="hn">${esc(x.h.code)}</span>
+             <span class="hv">${x.cases}/${x.h.cases} · ${x.ctrls}/${x.h.controls}</span></div>`).join('')}
+          <div class="hs-key">cases / target · controls / target</div></div>`:''}
+      </div>
+      <p class="section-eyebrow">What would you like to do?</p>
+      <button class="action-card" onclick="startNew()">
+        <span class="ic b">${I.clip}</span>
+        <span class="tx"><h3>Enrol a child</h3><span>Case report form + caregiver questionnaire</span></span>
+        <span class="arrow">${I.arrow}</span></button>
+      <button class="action-card" onclick="openList()">
+        <span class="ic y">${I.list}</span>
+        <span class="tx"><h3>Records</h3><span>${records.length} enrolment${records.length===1?'':'s'} on this device</span></span>
+        <span class="arrow">${I.arrow}</span></button>
+      <button class="action-card" onclick="openDash()">
+        <span class="ic g">${I.chart}</span>
+        <span class="tx"><h3>Dashboard</h3><span>${GAS_URL?'Live summary from Google Sheets':'Not connected — tap to set up'}</span></span>
+        <span class="arrow">${I.arrow}</span></button>
+      <div style="height:6px"></div>
+      <button class="btn btn-ghost btn-block btn-sm" onclick="setGAS()">${GAS_URL?'Google Sheet connected · change':'Connect Google Sheet'}</button>
+    </div></div>`;
+}
+function setGAS(){
+  const v=prompt('Paste the Google Apps Script Web App URL (ends with /exec):',GAS_URL||'');
+  if(v===null)return;
+  const t=v.trim();
+  if(t&&t.indexOf('script.google.com')===-1){toast('That does not look like a /exec URL');return;}
+  GAS_URL=t;Store.set(URL_KEY,t);toast(t?'Google Sheet connected':'Disconnected');renderHome();
+}
+
+/* =========================================================
+   FORM
+   ========================================================= */
+function startNew(){
+  ans={enrolDate:todayISO(), enrolTime:nowHM(), interviewer:interviewer||'', G0:todayISO()};
+  pg=0; saveDraft(); renderPage();
+}
+function resumeDraft(){
+  const d=Store.get(DRAFT_KEY,null); if(!d){renderHome();return;}
+  ans=d.ans||{}; pg=d.pg||0; renderPage();
+}
+function saveDraft(){ Store.set(DRAFT_KEY,{ans:ans,pg:pg}); }
+function discardDraft(){ Store.del(DRAFT_KEY); }
+
+function ctl(q){
+  const v=ans[q.id];
+  if(q.type==='note') return `<div class="skip-note">${esc(q.help||'')}</div>`;
+
+  if(q.type==='auto'){
+    const val=genStudyId(ans); ans.studyId=val;
+    return `<div class="field"><input type="text" id="autoId" readonly value="${esc(val||'— select hospital and group first —')}"></div>`;
+  }
+  if(q.type==='choice'){
+    let h='<div class="opts">'+q.options.map(o=>{
+      const cls=q.yn?(o==='Yes'?'yes':(o==='No'?'no':'')):'';
+      return `<div class="opt ${cls} ${v===o?'sel':''}" data-q="${q.id}" data-v="${esc(o)}"><span class="mark"></span><span>${esc(o)}</span></div>`;
+    }).join('');
+    if(q.other) h+=`<div class="opt ${v==='Other'?'sel':''}" data-q="${q.id}" data-v="Other"><span class="mark"></span><span>Other</span></div>`;
+    h+='</div>';
+    if(q.other) h+=`<div id="ob_${q.id}" style="${v==='Other'?'':'display:none'}"><div class="other-box"><input type="text" placeholder="Please specify…" data-k="${q.id}_other" value="${esc(ans[q.id+'_other']||'')}"></div></div>`;
+    return h;
+  }
+  if(q.type==='multi'){
+    const arr=Array.isArray(v)?v:[];
+    let opts=q.options.slice();
+    let h='<div class="chips">'+opts.map(o=>
+      `<div class="chip ${arr.indexOf(o)>-1?'sel':''}" data-mq="${q.id}" data-v="${esc(o)}"><span class="bx">${I.tick}</span><span>${esc(o)}</span></div>`).join('');
+    if(q.other) h+=`<div class="chip ${arr.indexOf('Other')>-1?'sel':''}" data-mq="${q.id}" data-v="Other"><span class="bx">${I.tick}</span><span>Other</span></div>`;
+    if(q.none)  h+=`<div class="chip none ${arr.indexOf(q.none)>-1?'sel':''}" data-mq="${q.id}" data-v="${esc(q.none)}" data-none="1"><span class="bx">${I.tick}</span><span>${esc(q.none)}</span></div>`;
+    h+='</div>';
+    if(q.other) h+=`<div id="ob_${q.id}" style="${arr.indexOf('Other')>-1?'':'display:none'}"><div class="other-box"><input type="text" placeholder="Please specify…" data-k="${q.id}_other" value="${esc(ans[q.id+'_other']||'')}"></div></div>`;
+    return h;
+  }
+  if(q.type==='progress'){
+    let h='';
+    for(let d=1;d<=5;d++){
+      h+=`<div class="sub-lbl">Day ${d}</div>
+        <div class="field" style="margin-bottom:6px"><input type="text" placeholder="General wellbeing" data-k="E28_d${d}_well" value="${esc(ans['E28_d'+d+'_well']||'')}"></div>
+        <div class="grid2" style="margin-bottom:10px">
+          <div class="field"><input type="number" placeholder="Parasite density" data-k="E28_d${d}_pd" value="${esc(ans['E28_d'+d+'_pd']||'')}"></div>
+          <div class="field"><input type="number" step="0.1" placeholder="Hb (g/dL)" data-k="E28_d${d}_hb" value="${esc(ans['E28_d'+d+'_hb']||'')}"></div>
+        </div>`;
+    }
+    return h;
+  }
+  if(q.type==='autofill'){
+    const val=q.from(ans)||'';
+    ans[q.id]=val;
+    return `<div class="field"><input type="text" data-auto="${q.id}" readonly value="${esc(val||'— select a hospital first —')}"></div>`;
+  }
+  if(q.type==='select'){
+    return `<div class="field"><select data-k="${q.id}">
+      <option value="">— Select —</option>
+      ${q.options.map(o=>`<option ${v===o?'selected':''}>${esc(o)}</option>`).join('')}
+    </select></div>`;
+  }
+  if(q.type==='textarea'){
+    return `<div class="field"><textarea data-k="${q.id}" placeholder="${esc(q.ph||'')}">${esc(v||'')}</textarea></div>`;
+  }
+  const t=q.type==='number'?'number':q.type==='date'?'date':q.type==='time'?'time':'text';
+  const attrs=[q.min!=null?`min="${q.min}"`:'',q.max!=null?`max="${q.max}"`:'',q.dec?'step="0.1"':'',q.ph?`placeholder="${esc(q.ph)}"`:''].join(' ');
+  const inp=`<input type="${t}" ${attrs} data-k="${q.id}" value="${esc(v||'')}">`;
+  return q.unit
+    ? `<div class="field unit">${inp}<span class="u">${esc(q.unit)}</span></div>`
+    : `<div class="field">${inp}</div>`;
+}
+function qCard(q){
+  const num=q.n?`<span class="q-no">Q${q.n}</span>`:'';
+  const req=(q.optional||q.type==='auto'||q.type==='note'||q.type==='progress')?'':'<span class="req">*</span>';
+  return `<div class="q-card" id="qc_${q.id}">
+    ${num}
+    <div class="q-txt">${esc(q.q)}${req}</div>
+    ${q.help&&q.type!=='note'?`<div class="q-help">${esc(q.help)}</div>`:''}
+    ${ctl(q)}
+    <div id="fl_${q.id}"></div>
+  </div>`;
+}
+function renderPage(){
+  const P=PAGES[pg], items=pageItems(pg);
+  const total=PAGES.length, pct=Math.round(pg/total*100);
+  const grp=ans.group?(isCase(ans)?'<span class="tag-pill case">CASE</span>':'<span class="tag-pill ctrl">CONTROL</span>'):'';
+  const banner = P.inst===1
+    ? `<div class="inst-banner i1"><div class="n">Instrument 1</div><h2>Case Report Form</h2><p>Prospective structured CRF — completed by the clinician from examination and the medical record.</p></div>`
+    : P.inst===2
+      ? `<div class="inst-banner i2"><div class="n">Instrument 2</div><h2>Caregiver Questionnaire</h2><p>Administered to the parent or guardian within 24–72 hours of admission.</p></div>`
+      : `<div class="inst-banner i1"><div class="n">Step 1</div><h2>Enrolment &amp; eligibility</h2><p>Confirm the child meets all inclusion criteria before collecting data.</p></div>`;
+  const showBanner = pg===0 || PAGES[pg-1].inst!==P.inst;
+
+  app.innerHTML=`<div class="appbar">
+      <button class="ico-btn" onclick="prevPage()">${pg===0?I.home:I.back}</button>
+      <div class="titles"><div class="eyebrow">${esc(ans.studyId||'New enrolment')}</div><div class="title">${esc(P.title)}</div></div>
+      ${grp||`<img class="bar-logo" src="${LOGO}" alt="ICF-SL">`}
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-row"><span class="step">Section ${pg+1} of ${total}</span><span class="pct">${pct}%</span></div>
+      <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="body"><div class="form" id="fb">
+      ${showBanner?banner:''}
+      ${items.map(qCard).join('')}
+      ${!items.length?`<div class="skip-note">No questions in this section apply to this record.</div>`:''}
+    </div></div>
+    <div class="footer">
+      ${pg>0?`<button class="btn btn-ghost" onclick="prevPage()">Back</button>`:''}
+      <button class="btn btn-primary" onclick="nextPage()">${pg===PAGES.length-1?'Review':'Next'}</button>
+    </div>`;
+  applyDefaults();
+  wire(); runFlags();
+}
+function applyDefaults(){ prefillDistricts(); }
+function wire(){
+  const b=document.getElementById('fb'); if(!b) return;
+  b.addEventListener('click',e=>{
+    const o=e.target.closest('.opt');
+    if(o){
+      const qid=o.dataset.q, val=o.dataset.v;
+      ans[qid]=val;
+      document.querySelectorAll(`.opt[data-q="${qid}"]`).forEach(x=>x.classList.remove('sel'));
+      o.classList.add('sel');
+      const ob=document.getElementById('ob_'+qid); if(ob) ob.style.display=(val==='Other')?'':'none';
+      afterChange(qid); return;
+    }
+    const c=e.target.closest('.chip');
+    if(c){
+      const qid=c.dataset.mq, val=c.dataset.v, q=byId(qid);
+      let arr=Array.isArray(ans[qid])?ans[qid].slice():[];
+      const on=arr.indexOf(val)>-1;
+      if(c.dataset.none){                 /* "None" is exclusive */
+        arr = on?[]:[val];
+      }else{
+        if(on) arr=arr.filter(x=>x!==val); else arr.push(val);
+        if(q&&q.none) arr=arr.filter(x=>x!==q.none);   /* any real pick clears "None" */
+      }
+      ans[qid]=arr;
+      document.querySelectorAll(`.chip[data-mq="${qid}"]`).forEach(x=>x.classList.toggle('sel',arr.indexOf(x.dataset.v)>-1));
+      const ob=document.getElementById('ob_'+qid); if(ob) ob.style.display=(arr.indexOf('Other')>-1)?'':'none';
+      afterChange(qid); return;
+    }
+  });
+  b.addEventListener('input',e=>{
+    const i=e.target.closest('[data-k]'); if(!i) return;
+    ans[i.dataset.k]=i.value; afterChange(i.dataset.k);
+  });
+  b.addEventListener('change',e=>{
+    const i=e.target.closest('select[data-k]'); if(!i) return;
+    ans[i.dataset.k]=i.value; afterChange(i.dataset.k);
+  });
+}
+function afterChange(qid){
+  const card=document.getElementById('qc_'+String(qid).split('_')[0]);
+  if(card) card.classList.remove('missing');
+  const a=document.getElementById('autoId');
+  if(a){ ans.studyId=genStudyId(ans); a.value=ans.studyId||'— select hospital and group first —'; }
+  prefillDistricts();
+  if(qid==='interviewer'){ interviewer=ans.interviewer; Store.set(ME_KEY,interviewer); }
+  /* a change may open or close later questions -> re-render this page */
+  const dependents=PAGES[pg].items.some(q=>q.when);
+  saveDraft();
+  runFlags();
+  if(dependents) rerenderIfVisibilityChanged();
+}
+/* District of residence is derived from the hospital and is READ-ONLY:
+     Ola During -> Western Area Urban   Bo Government   -> Bo
+     Koidu      -> Kono                 Magburaka       -> Tonkolili
+   Recomputed on every change so it always tracks the selected hospital. */
+function prefillDistricts(){
+  ALL.filter(q=>q.type==='autofill').forEach(q=>{
+    const v=q.from(ans)||'';
+    ans[q.id]=v;
+    const el=document.querySelector(`input[data-auto="${q.id}"]`);
+    if(el) el.value=v||'— select a hospital first —';
+  });
+}
+
+let lastVis='';
+function rerenderIfVisibilityChanged(){
+  const sig=PAGES[pg].items.map(q=>visible(q)?'1':'0').join('');
+  if(sig!==lastVis){ lastVis=sig; clearHidden(); renderPage(); }
+}
+/* clear answers to questions that skip logic has hidden, so skipped
+   questions never leave stale values behind in the record */
+function clearHidden(){
+  ALL.forEach(q=>{
+    if(q.when && !q.when(ans)){
+      delete ans[q.id]; delete ans[q.id+'_other'];
+      if(q.type==='progress') for(let d=1;d<=5;d++){delete ans['E28_d'+d+'_well'];delete ans['E28_d'+d+'_pd'];delete ans['E28_d'+d+'_hb'];}
+    }
+  });
+}
+
+/* ---------- clinical range flags (warn, never block) ---------- */
+const FLAGS=[
+  {id:'D20', test:v=>v<5,     cls:'bad',  msg:'Hb < 5 g/dL — meets the WHO criterion for severe anaemia.'},
+  {id:'D21', test:v=>v<2.2,   cls:'bad',  msg:'Glucose < 2.2 mmol/L — meets the WHO criterion for hypoglycaemia.'},
+  {id:'C15', test:v=>v<90,    cls:'warn', msg:'SpO₂ below 90%.'},
+  {id:'C12', test:v=>v>=37.5, cls:'warn', msg:'Fever present (≥ 37.5 °C).'},
+  {id:'C11', test:v=>v<11.5,  cls:'warn', msg:'MUAC < 11.5 cm — severe acute malnutrition.'},
+  {id:'A2',  test:v=>v>59,    cls:'bad',  msg:'Age above 59 months — outside the study age range (0–59 months).'}
+];
+function runFlags(){
+  FLAGS.forEach(f=>{
+    const el=document.getElementById('fl_'+f.id); if(!el) return;
+    const v=parseFloat(ans[f.id]);
+    el.innerHTML=(!isNaN(v)&&f.test(v))?`<div class="flag ${f.cls}">${esc(f.msg)}</div>`:'';
+  });
+  /* a case should have at least one WHO sign (advisory only) */
+  const el=document.getElementById('fl_C16');
+  if(el&&isCase(ans)){
+    const arr=Array.isArray(ans.C16)?ans.C16:[];
+    const real=arr.filter(x=>x!=='None present');
+    el.innerHTML=real.length?`<div class="flag ok">${real.length} WHO severity sign${real.length===1?'':'s'} recorded.</div>`
+                            :`<div class="flag warn">A case normally has at least one WHO severity sign.</div>`;
+  }
+}
+
+function nextPage(){
+  const items=pageItems(pg), miss=items.filter(q=>!answered(q));
+  if(miss.length){
+    document.querySelectorAll('.q-card.missing').forEach(e=>e.classList.remove('missing'));
+    miss.forEach(q=>{const c=document.getElementById('qc_'+q.id); if(c) c.classList.add('missing');});
+    const f=document.getElementById('qc_'+miss[0].id);
+    if(f) f.scrollIntoView({behavior:'smooth',block:'center'});
+    toast(miss.length+' unanswered question'+(miss.length>1?'s':''));
+    return;
+  }
+  if(pg===0 && !ans.studyId){ toast('Select hospital and group first'); return; }
+  if(pg===PAGES.length-1){ renderReview(); return; }
+  pg++; lastVis=''; saveDraft(); renderPage();
+  document.querySelector('.body').scrollTop=0;
+}
+function prevPage(){
+  if(pg===0){ if(confirm('Leave this enrolment? It will be saved as a draft you can resume.')){ saveDraft(); renderHome(); } return; }
+  pg--; lastVis=''; saveDraft(); renderPage();
+}
+
+/* ---------- review ---------- */
+function fmt(q){
+  let v=ans[q.id];
+  if(q.type==='progress'){
+    const days=[];
+    for(let d=1;d<=5;d++){ if(ans['E28_d'+d+'_well']||ans['E28_d'+d+'_pd']||ans['E28_d'+d+'_hb']) days.push('D'+d); }
+    return days.length?days.join(', ')+' recorded':'—';
+  }
+  if(Array.isArray(v)){
+    if(!v.length) return '—';
+    return v.map(x=>x==='Other'&&ans[q.id+'_other']?'Other — '+ans[q.id+'_other']:x).join(', ');
+  }
+  if(v===undefined||v===null||String(v).trim()==='') return '—';
+  if(q.other&&v==='Other'&&ans[q.id+'_other']) return 'Other — '+ans[q.id+'_other'];
+  return String(v);
+}
+function renderReview(){
+  let body='',cur='';
+  ALL.filter(q=>visible(q)&&q.type!=='note'&&q.type!=='auto').forEach(q=>{
+    if(q.sec!==cur){cur=q.sec;body+=`<div class="rv-sec">${esc(cur)}</div>`;}
+    const val=fmt(q), miss=(val==='—'&&!q.optional);
+    body+=`<div class="rv-item"><span class="q">${esc(q.q)}</span><span class="a ${miss?'empty':''}">${esc(val)}</span></div>`;
+  });
+  app.innerHTML=`<div class="appbar">
+      <button class="ico-btn" onclick="backFromReview()">${I.back}</button>
+      <div class="titles"><div class="eyebrow">Almost done</div><div class="title">Review &amp; submit</div></div>
+      ${isCase(ans)?'<span class="tag-pill case">CASE</span>':'<span class="tag-pill ctrl">CONTROL</span>'}
+    </div>
+    <div class="body"><div class="rv">
+      <div class="rv-head"><div class="id">${esc(ans.studyId||'—')}</div>
+        <div class="meta">${esc(ans.hospital||'')} · ${esc(ans.enrolDate||'')} ${esc(ans.enrolTime||'')}<br>${esc(ans.interviewer||'')}</div></div>
+      ${body}
+    </div></div>
+    <div class="footer"><button class="btn btn-primary btn-block" onclick="submitRec()">${GAS_URL?'Submit to Google Sheets':'Save enrolment'}</button></div>`;
+}
+function backFromReview(){ pg=PAGES.length-1; renderPage(); }
+
+function submitRec(){
+  const rec=Object.assign({},ans,{
+    _id:ans.studyId, _ts:new Date().toISOString(),
+    _group:isCase(ans)?'Case':'Control',
+    _whoSigns:(Array.isArray(ans.C16)?ans.C16:[]).filter(x=>x!=='None present').join('; ')
+  });
+  records.push(rec); Store.set(REC_KEY,records); discardDraft();
+  renderDone(rec);
+  if(GAS_URL){
+    setSync('checking','Sending to Google Sheet…');
+    send(rec,ok=>{ setSync(ok?'on':'warn', ok?'☁ Saved to Google Sheet':'⚠ Saved on this device only'); if(ok) loadCounts(); });
+  }
+}
+function send(rec,cb){
+  if(!GAS_URL){cb&&cb(false);return;}
+  const fn='__w'+Date.now(); let done=false;
+  const s=document.createElement('script');
+  window[fn]=r=>{done=true;delete window[fn];s.remove();cb&&cb(!!(r&&r.status==='ok'));};
+  s.onerror=()=>{if(done)return;delete window[fn];s.remove();cb&&cb(false);};
+  s.src=GAS_URL+(GAS_URL.indexOf('?')>-1?'&':'?')+'data='+encodeURIComponent(JSON.stringify(rec))+'&callback='+fn+'&t='+Date.now();
+  document.body.appendChild(s);
+  setTimeout(()=>{if(!done){try{delete window[fn];s.remove();}catch(e){}cb&&cb(false);}},20000);
+}
+function setSync(cls,txt){const e=document.getElementById('syncPill');if(!e)return;e.className='sync '+cls;e.textContent=txt;}
+function renderDone(r){
+  app.innerHTML=`<div class="body"><div class="done">
+    <div class="circle">${I.check}</div>
+    <h2>Enrolment saved</h2>
+    <div class="idbig">${esc(r._id)}</div>
+    <p>${esc(r._group)} · ${esc(r.hospital||'')}<br>Both instruments recorded.</p>
+    <span class="sync ${GAS_URL?'checking':'warn'}" id="syncPill">${GAS_URL?'Checking Google Sheet…':'◍ Saved on this device only'}</span>
+    <div class="actions">
+      <button class="btn btn-primary btn-block" onclick="startNew()">Enrol next child</button>
+      <button class="btn btn-ghost btn-block" onclick="openList()">View records</button>
+      <button class="btn btn-ghost btn-block" onclick="renderHome()">Back to home</button>
+    </div></div></div>`;
+}
+
+/* =========================================================
+   RECORDS
+   ========================================================= */
+function openList(){listF='all';detail=-1;renderList();}
+function setLF(f){listF=f;renderList();}
+function lFilt(){
+  const all=records.map((r,i)=>({r,i}));
+  if(listF==='all')return all;
+  return all.filter(x=>listF==='case'?isCase(x.r):isControl(x.r));
+}
+function renderList(){
+  const hd=`<div class="appbar"><button class="ico-btn" onclick="renderHome()">${I.home}</button>
+    <div class="titles"><div class="eyebrow">On this device</div><div class="title">Records</div></div>
+    <img class="bar-logo" src="${LOGO}" alt="ICF-SL"></div>`;
+  if(!records.length){
+    app.innerHTML=hd+`<div class="body"><div class="list"><div class="empty">
+      <div class="ic">${I.list}</div><h3>No enrolments yet</h3>
+      <p>Children you enrol are saved on this device and listed here.</p>
+      <button class="btn btn-primary btn-block" onclick="startNew()">Enrol a child</button>
+    </div></div></div>`;return;
+  }
+  const rows=lFilt().slice().reverse();
+  app.innerHTML=hd+`<div class="body"><div class="list">
+    <h2>Saved enrolments</h2>
+    <div class="sub">${records.length} record${records.length===1?'':'s'} on this device</div>
+    <div class="seg">
+      <button class="${listF==='all'?'on':''}" onclick="setLF('all')">All</button>
+      <button class="${listF==='case'?'on':''}" onclick="setLF('case')">Cases</button>
+      <button class="${listF==='ctrl'?'on':''}" onclick="setLF('ctrl')">Controls</button>
+    </div>
+    <div class="card" style="padding-top:5px">
+      ${rows.length?rows.map(x=>{const r=x.r,c=isCase(r);return `<div class="li" style="cursor:pointer" onclick="openRec(${x.i})">
+        <div class="av">${esc(r._id||'?')}</div>
+        <div class="m"><div class="t">${esc(r.A1||'—')} · ${esc(r.A2||'?')} mo · ${esc(r.A3||'')}</div>
+          <div class="s">${esc(r.hospital||'')} · ${esc(r.enrolDate||'')}</div></div>
+        <span class="pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span></div>`;}).join('')
+      :'<div style="font:400 12.5px var(--body);color:var(--muted);padding:14px 0">No records in this filter.</div>'}
+    </div>
+    <div class="tools">
+      <button class="btn btn-ghost" onclick="exportCSV(lFilt().map(x=>x.r),'severe_malaria.csv')">Export CSV</button>
+      <button class="btn btn-danger" onclick="clearAll()">Clear all</button>
+    </div></div></div>`;
+}
+function openRec(i){detail=i;renderRec();}
+function renderRec(){
+  const r=records[detail]; if(!r){renderList();return;}
+  const c=String(r._group)==='Case';
+  const save=ans; ans=r;    /* reuse visibility + fmt against this record */
+  let body='',cur='';
+  ALL.filter(q=>visible(q)&&q.type!=='note'&&q.type!=='auto').forEach(q=>{
+    if(q.sec!==cur){cur=q.sec;body+=`<div class="rv-sec">${esc(cur)}</div>`;}
+    body+=`<div class="rv-item"><span class="q">${esc(q.q)}</span><span class="a">${esc(fmt(q))}</span></div>`;
+  });
+  ans=save;
+  app.innerHTML=`<div class="appbar"><button class="ico-btn" onclick="renderList()">${I.back}</button>
+      <div class="titles"><div class="eyebrow">Enrolment</div><div class="title">${esc(r._id)}</div></div>
+      <span class="tag-pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span></div>
+    <div class="body"><div class="rv">
+      <div class="rv-head"><div class="id">${esc(r._id)}</div>
+        <div class="meta">${esc(r.hospital||'')} · ${esc(r.enrolDate||'')} ${esc(r.enrolTime||'')}<br>${esc(r.interviewer||'')}</div></div>
+      ${body}
+    </div></div>`;
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function openDash(retry){
+  if(!GAS_URL){dashSrc='none';drawDash();return;}
+  dashLoading=true;drawDash();
+  fetchLive(rows=>{
+    if(rows&&Array.isArray(rows)){dashData=rows;dashSrc='live';dashLoading=false;drawDash();return;}
+    if(!retry){openDash(true);return;}
+    dashLoading=false;dashSrc='error';drawDash();
+  });
+}
+function fetchLive(cb){
+  const fn='__c'+Date.now(); const s=document.createElement('script'); let done=false;
+  window[fn]=d=>{done=true;delete window[fn];s.remove();cb(d);};
+  s.onerror=()=>{if(done)return;delete window[fn];s.remove();cb(null);};
+  s.src=GAS_URL+(GAS_URL.indexOf('?')>-1?'&':'?')+'callback='+fn+'&t='+Date.now();
+  document.body.appendChild(s);
+  setTimeout(()=>{if(!done){try{delete window[fn];s.remove();}catch(e){}cb(null);}},20000);
+}
+function setDF(f){dashF=f;drawDash();}
+function dFilt(){
+  if(dashF==='all')return dashData;
+  return dashData.filter(r=>String(r._group)===(dashF==='case'?'Case':'Control'));
+}
+function dist(data,field,order){
+  const c={};
+  data.forEach(r=>{const v=r[field]; if(v!==''&&v!=null) c[v]=(c[v]||0)+1;});
+  let keys=order?order.filter(k=>c[k]):Object.keys(c).sort((a,b)=>c[b]-c[a]);
+  const tot=keys.reduce((s,k)=>s+c[k],0)||1;
+  return keys.map(k=>({k,n:c[k],pct:Math.round(c[k]/tot*100)}));
+}
+function bars(title,rows,red){
+  if(!rows.length) return `<div class="card"><h4><span class="dot"></span>${esc(title)}</h4><div style="font:400 12px var(--body);color:var(--muted)">No data yet.</div></div>`;
+  return `<div class="card"><h4><span class="dot"></span>${esc(title)}</h4>`+rows.map(r=>
+    `<div class="bar-row"><div class="bar-top"><span class="k">${esc(r.k)}</span><span class="v">${r.n} · ${r.pct}%</span></div>
+     <div class="bar-track"><div class="bar-fill ${red?'r':''}" style="width:${r.pct}%"></div></div></div>`).join('')+`</div>`;
+}
+function signCounts(data){
+  const c={};
+  data.forEach(r=>String(r._whoSigns||'').split(';').map(s=>s.trim()).filter(Boolean).forEach(s=>c[s]=(c[s]||0)+1));
+  const tot=data.length||1;
+  return Object.keys(c).sort((a,b)=>c[b]-c[a]).map(k=>({k,n:c[k],pct:Math.round(c[k]/tot*100)}));
+}
+function drawDash(){
+  const hd=`<div class="appbar"><button class="ico-btn" onclick="renderHome()">${I.home}</button>
+    <div class="titles"><div class="eyebrow">Live · Google Sheets</div><div class="title">Dashboard</div></div>
+    <img class="bar-logo" src="${LOGO}" alt="ICF-SL">
+    <button class="ico-btn" onclick="openDash()">${I.refresh}</button></div>`;
+  if(dashSrc==='none'){
+    app.innerHTML=hd+`<div class="body"><div class="list"><div class="empty"><div class="ic">${I.cloud}</div>
+      <h3>Not connected</h3><p>Connect a Google Sheet to see live results from all sites.</p>
+      <button class="btn btn-primary btn-block" onclick="setGAS()">Connect Google Sheet</button></div></div></div>`;return;
+  }
+  if(dashLoading){
+    app.innerHTML=hd+`<div class="body"><div class="list"><div class="empty"><div class="spin"></div>
+      <h3 style="margin-top:18px">Loading live data…</h3><p>Fetching enrolments from Google Sheets.</p></div></div></div>`;return;
+  }
+  if(dashSrc==='error'){
+    app.innerHTML=hd+`<div class="body"><div class="list"><div class="empty"><div class="ic">${I.cloud}</div>
+      <h3>Couldn’t load live data</h3><p>Usually a slow connection, or the app opened inside another app’s browser. Open it in Chrome and retry.</p>
+      <button class="btn btn-primary btn-block" onclick="openDash()">Retry</button>
+      <div style="height:10px"></div>
+      <button class="btn btn-ghost btn-block" onclick="openList()">View this device’s records</button></div></div></div>`;return;
+  }
+  if(!dashData.length){
+    app.innerHTML=hd+`<div class="body"><div class="list"><div class="empty"><div class="ic">${I.empty}</div>
+      <h3>No enrolments yet</h3><p>Submitted records will appear here live.</p>
+      <button class="btn btn-primary btn-block" onclick="startNew()">Enrol a child</button></div></div></div>`;return;
+  }
+  const data=dFilt(), n=data.length;
+  const cases=dashData.filter(r=>String(r._group)==='Case');
+  const ctrls=dashData.filter(r=>String(r._group)==='Control');
+  const died=cases.filter(r=>r.F29==='Died').length;
+  const cfr=cases.length?Math.round(died/cases.length*100):0;
+  const ratio=cases.length?(ctrls.length/cases.length).toFixed(1):'—';
+
+  app.innerHTML=hd+`<div class="body"><div class="list">
+    <h2>Live dashboard</h2>
+    <div class="sub">${dashData.length} enrolment${dashData.length===1?'':'s'} in Google Sheets</div>
+    <div class="seg">
+      <button class="${dashF==='all'?'on':''}" onclick="setDF('all')">All</button>
+      <button class="${dashF==='case'?'on':''}" onclick="setDF('case')">Cases</button>
+      <button class="${dashF==='ctrl'?'on':''}" onclick="setDF('ctrl')">Controls</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="n r">${cases.length}</div><div class="l">Cases (target 115)</div></div>
+      <div class="stat"><div class="n g">${ctrls.length}</div><div class="l">Controls (target 230)</div></div>
+      <div class="stat"><div class="n">${ratio}</div><div class="l">Control : case ratio (target 2.0)</div></div>
+      <div class="stat"><div class="n r">${cfr}%</div><div class="l">Case fatality (${died}/${cases.length})</div></div>
+    </div>
+    ${bars('Enrolments by hospital',dist(data,'hospital',HOSPITALS.map(h=>h.name)))}
+    ${bars('WHO severity signs (cases)',signCounts(cases),true)}
+    ${bars('Outcome (cases)',dist(cases,'F29',['Recovered','Died','Referred','Absconded']),true)}
+    ${bars('Time to care-seeking',dist(data,'G13',['Same day','Next day','2 days','3 or more days']))}
+    ${bars('Slept under a net last night',dist(data,'G21',['Yes','No']))}
+    ${bars('Referral mode',dist(data,'A5'))}
+    <div class="tools"><button class="btn btn-ghost btn-block" onclick="exportCSV(dFilt(),'severe_malaria_live.csv')">Export CSV</button></div>
+  </div></div>`;
+}
+
+/* =========================================================
+   TOOLS
+   ========================================================= */
+function csvCols(){
+  const meta=['_id','_ts','_group','hospital','enrolDate','enrolTime','interviewer'];
+  const qs=[]; const hdr=[];
+  ALL.forEach(q=>{
+    if(q.type==='note'||q.type==='auto') return;
+    if(q.type==='progress'){
+      for(let d=1;d<=5;d++){ qs.push('E28_d'+d+'_well','E28_d'+d+'_pd','E28_d'+d+'_hb');
+        hdr.push('Day '+d+' wellbeing','Day '+d+' parasite density','Day '+d+' Hb'); }
+      return;
+    }
+    qs.push(q.id); hdr.push(q.q);
+    if(q.other){ qs.push(q.id+'_other'); hdr.push(q.q+' — Other (specify)'); }
+  });
+  return {cols:meta.concat(qs), hdr:['Study ID','Submitted at','Group','Hospital','Enrolment date','Enrolment time','Interviewer'].concat(hdr)};
+}
+function exportCSV(data,name){
+  if(!data||!data.length){toast('No data to export');return;}
+  const {cols,hdr}=csvCols();
+  const cell=v=>{ if(Array.isArray(v)) v=v.join('; '); v=v==null?'':String(v);
+    return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const csv=[hdr.join(',')].concat(data.map(r=>cols.map(c=>cell(r[c])).join(','))).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=name;
+  document.body.appendChild(a);a.click();a.remove();toast('CSV exported');
+}
+function clearAll(){if(!confirm('Delete all enrolments stored on this device?'))return;records=[];Store.set(REC_KEY,records);renderList();}
+
+renderHome();
+</script>
+</body>
+</html>
