@@ -198,6 +198,7 @@
   .pill{font:600 9.5px/1 var(--body);padding:6px 8px;border-radius:99px;flex:0 0 auto;letter-spacing:.04em;}
   .pill.case{background:var(--bad-bg);color:var(--bad);}
   .pill.ctrl{background:var(--ok-bg);color:var(--ok);}
+  .pill.cgp{background:var(--sky-100);color:var(--sky-700);}
   .seg{display:flex;background:var(--sky-50);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:13px;}
   .seg button{flex:1;border:none;background:transparent;font:600 11.5px var(--body);color:var(--muted);padding:9px 4px;border-radius:9px;cursor:pointer;}
   .seg button.on{background:var(--white);color:var(--sky-700);box-shadow:var(--sh-sm);}
@@ -241,6 +242,59 @@
   .done .sync.queued{background:var(--sky-50);color:var(--sky-700);}
   .draft{display:flex;align-items:center;gap:10px;background:var(--warn-bg);border:1px solid #f0dda0;border-radius:14px;padding:12px 14px;margin-bottom:14px;}
   .draft .t{flex:1;font:500 12px/1.4 var(--body);color:#8a6d00;}
+
+  /* ---- matched-set cards (115, sequential) ---- */
+  .sets-note{font:400 12px/1.5 var(--body);color:var(--muted);margin:2px 0 14px;}
+  .inelig{margin-top:9px;padding:9px 11px;border-radius:11px;font:500 11.5px/1.45 var(--body);
+    background:var(--bad-bg);border:1px solid #f0c4c4;color:var(--bad);}
+  .inelig.ok{background:var(--ok-bg);border-color:#bfe6c8;color:var(--ok);}
+  .set-sec{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:16px 2px 9px;padding-bottom:7px;border-bottom:1px solid var(--line);}
+  .set-sec .hn{font:600 12.5px/1.15 var(--disp);letter-spacing:.02em;color:var(--sky-700);}
+  .set-sec .rg{font:500 10px/1 var(--body);color:var(--muted);flex:0 0 auto;}
+  .set-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  .set-card{position:relative;background:var(--white);border:1px solid var(--line);border-radius:16px;padding:13px 13px 12px;box-shadow:var(--sh-sm);text-align:left;cursor:pointer;transition:transform .12s,box-shadow .2s,border-color .15s;}
+  .set-card:active{transform:scale(.98);}
+  .set-card .sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .set-card .sc-no{font:700 15px/1 var(--disp);letter-spacing:.03em;color:var(--ink);}
+  .set-card .sc-badge{font:700 8.5px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:5px 7px;border-radius:99px;}
+  .set-card .dots{display:flex;gap:6px;}
+  .set-card .dots .d{flex:1;height:6px;border-radius:99px;background:var(--sky-50);border:1px solid var(--line);position:relative;overflow:hidden;}
+  .set-card .dots .d.done{background:var(--ok);border-color:var(--ok);}
+  .set-card .dots .d.next{background:var(--sky-400);border-color:var(--sky-400);}
+  .set-card .sc-lbl{display:flex;gap:6px;margin-top:6px;}
+  .set-card .sc-lbl span{flex:1;text-align:center;font:600 8px/1 var(--body);letter-spacing:.04em;color:var(--muted);text-transform:uppercase;}
+  /* states */
+  .set-card.current{border-color:var(--sky-500);box-shadow:0 0 0 3px rgba(61,154,214,.14),var(--sh-sm);}
+  .set-card.current .sc-badge{background:var(--sky-100);color:var(--sky-700);}
+  .set-card.complete .sc-badge{background:var(--ok-bg);color:var(--ok);}
+  .set-card.locked{cursor:not-allowed;opacity:.62;background:#f6f9fc;}
+  .set-card.locked .sc-badge{background:#eef2f5;color:var(--muted);}
+  .set-card.locked .sc-no{color:var(--muted);}
+
+  /* ---- one card detail: three slots ---- */
+  .slot{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--white);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px;box-shadow:var(--sh-sm);transition:transform .12s,box-shadow .2s;}
+  .slot.tap{cursor:pointer;}
+  .slot.tap:active{transform:scale(.98);}
+  .slot.tap:hover{box-shadow:var(--sh-md);}
+  .slot .si{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;flex:0 0 auto;font:700 13px var(--disp);}
+  .slot .si.case{background:var(--bad-bg);color:var(--bad);}
+  .slot .si.ctrl{background:var(--ok-bg);color:var(--ok);}
+  .slot .si.cg{background:var(--sky-100);color:var(--sky-700);}
+  .person{margin-bottom:16px;}
+  .person-hd{font:700 11px/1 var(--body);letter-spacing:.05em;text-transform:uppercase;color:var(--sky-700);margin:0 2px 8px;}
+  .person .slot{margin-bottom:9px;}
+  .slot .si.lock{background:#eef2f5;color:var(--muted);}
+  .slot .st{flex:1;min-width:0;}
+  .slot .st h3{font:600 15.5px/1.15 var(--disp);}
+  .slot .st .cg{font:400 11.5px/1.4 var(--body);color:var(--muted);margin-top:2px;}
+  .slot .stt{font:700 9px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:6px 8px;border-radius:99px;flex:0 0 auto;}
+  .slot .stt.done{background:var(--ok-bg);color:var(--ok);}
+  .slot .stt.go{background:var(--sky-100);color:var(--sky-700);}
+  .slot .stt.wait{background:#eef2f5;color:var(--muted);}
+  .slot.locked{opacity:.6;background:#f6f9fc;}
+  .set-head{background:linear-gradient(160deg,var(--sky-500),var(--sky-700));color:#fff;border-radius:16px;padding:16px;margin-bottom:15px;}
+  .set-head .id{font:700 20px var(--disp);letter-spacing:.04em;}
+  .set-head .meta{font:400 11.5px/1.45 var(--body);opacity:.92;margin-top:5px;}
 </style>
 </head>
 <body>
@@ -284,6 +338,21 @@ const HOSPITALS=[
 const DISTRICTS=['Bo','Bombali','Bonthe','Falaba','Kailahun','Kambia','Karene','Kenema','Koinadugu','Kono',
                  'Moyamba','Port Loko','Pujehun','Tonkolili','Western Area Rural','Western Area Urban'];
 function hospDistrict(name){ const h=HOSPITALS.find(x=>x.name===name); return h?h.district:''; }
+/* Each set number belongs to a hospital, in blocks sized by its case quota:
+     Ola During  43 -> sets 1–43
+     Bo Govt     32 -> sets 44–75
+     Koidu/Kono  22 -> sets 76–97
+     Magburaka   18 -> sets 98–115   (43+32+22+18 = 115) */
+function hospForSet(n){
+  let start=1;
+  for(const h of HOSPITALS){ const end=start+h.cases-1; if(n>=start&&n<=end) return h; start=end+1; }
+  return HOSPITALS[HOSPITALS.length-1];
+}
+function setRange(h){
+  let start=1;
+  for(const x of HOSPITALS){ const end=start+x.cases-1; if(x===h) return [start,end]; start=end+1; }
+  return [1,TOTAL_SETS];
+}
 const WHO_SIGNS=['Severe anaemia','Convulsions','Prostration','Coma','Respiratory distress','Hypoglycaemia','Shock','Jaundice','Haemoglobinuria'];
 
 /* =========================================================
@@ -291,19 +360,38 @@ const WHO_SIGNS=['Severe anaemia','Convulsions','Prostration','Coma','Respirator
    type: choice | multi | number | text | date | time | textarea | auto | note
    when: a=>bool   -> skip logic (question hidden + cleared when false)
    ========================================================= */
-const SCREENING=[
-  /* CRF header line, verbatim:
-     Study ID ___  Hospital ___  Date & Time of Enrolment ___  Interviewer/Clinician ___
-     "Study group" is the one addition — the study is case-control, so both
-     instruments need to know which arm the child is in. */
-  {id:'hospital',   sec:'Enrolment', type:'choice', q:'Hospital', options:HOSPITALS.map(h=>h.name)},
-  {id:'group',      sec:'Enrolment', type:'choice', q:'Study group',
-     help:'Case = admitted with WHO-confirmed severe malaria. Control = OPD, parasitologically confirmed, no severe criteria.',
+/* One combined form per child. The caregiver questionnaire is embedded as
+   sections of the case/control form (not a separate form): each Case/Control is
+   ONE record containing the CRF plus the caregiver section. Names are captured
+   as first / middle / last for both the child and the caregiver. */
+const F_STUDYID_CHILD={id:'studyId', sec:'Enrolment', type:'auto', q:'Study ID',
+  help:'Set by the card you opened. Cases are numbered 1–115 (e.g. Case 1); each control takes its case number plus its slot (e.g. Control 1a).'};
+/* Child name — first / middle / last */
+const F_CHILD_FIRST ={id:'childFirst',  sec:'Enrolment', type:'text', q:"Child first name", ph:'First name'};
+const F_CHILD_MIDDLE={id:'childMiddle', sec:'Enrolment', type:'text', q:"Child middle name", ph:'Middle name', optional:true};
+const F_CHILD_LAST  ={id:'childLast',   sec:'Enrolment', type:'text', q:"Child last name", ph:'Last name'};
+/* Caregiver name — first / middle / last (shown in the caregiver section) */
+const F_CG_FIRST ={id:'cgFirst',  sec:'A · Caregiver information', type:'text', q:'Caregiver first name', ph:'First name'};
+const F_CG_MIDDLE={id:'cgMiddle', sec:'A · Caregiver information', type:'text', q:'Caregiver middle name', ph:'Middle name', optional:true};
+const F_CG_LAST  ={id:'cgLast',   sec:'A · Caregiver information', type:'text', q:'Caregiver last name', ph:'Last name'};
+const F_ENROLDATE={id:'enrolDate', sec:'Enrolment', type:'date', q:'Date of enrolment'};
+const F_ENROLTIME={id:'enrolTime', sec:'Enrolment', type:'time', q:'Time of enrolment'};
+const F_INTERVIEWER={id:'interviewer', sec:'Enrolment', type:'text', q:'Interviewer / Clinician', ph:'Full name'};
+
+/* form header (enrolment section) */
+const HEAD=[F_STUDYID_CHILD, F_CHILD_FIRST, F_CHILD_MIDDLE, F_CHILD_LAST, F_ENROLDATE, F_ENROLTIME, F_INTERVIEWER];
+/* caregiver name fields lead the embedded caregiver questionnaire */
+const CG_NAME=[F_CG_FIRST, F_CG_MIDDLE, F_CG_LAST];
+
+/* Set programmatically when a fieldworker opens a card slot — never rendered as
+   questions, but kept in ALL so they still show in Review, the record detail and
+   the CSV export. matchCase/ctrlSlot only apply to controls. */
+const ENROL_META=[
+  {id:'hospital',  sec:'Enrolment', type:'choice', q:'Hospital', options:HOSPITALS.map(h=>h.name)},
+  {id:'group',     sec:'Enrolment', type:'choice', q:'Study group',
      options:['Case (severe malaria, admitted)','Control (uncomplicated, OPD)']},
-  {id:'studyId',    sec:'Enrolment', type:'auto',   q:'Study ID', help:'Generated from the hospital, group and sequence on this device.'},
-  {id:'enrolDate',  sec:'Enrolment', type:'date',   q:'Date of enrolment'},
-  {id:'enrolTime',  sec:'Enrolment', type:'time',   q:'Time of enrolment'},
-  {id:'interviewer',sec:'Enrolment', type:'text',   q:'Interviewer / Clinician', ph:'Full name'}
+  {id:'matchCase', sec:'Enrolment', type:'number', q:'Matched case number', when:a=>isControl(a)},
+  {id:'ctrlSlot',  sec:'Enrolment', type:'choice', q:'Control slot', options:['a','b'], when:a=>isControl(a)}
 ];
 
 /* ---------- Instrument 1: Prospective Structured Case Report Form ----------
@@ -314,13 +402,18 @@ const SCREENING=[
    Q24 (oral dose) and Q25/Parenteral dose depend on Q23. */
 const CRF=[
   /* SECTION A — CHILD IDENTIFICATION AND DEMOGRAPHICS */
-  {id:'A1', n:1, sec:'A · Child identification and demographics', type:'text',   q:'Child initials / code', ph:'___________'},
-  {id:'A2', n:2, sec:'A · Child identification and demographics', type:'number', q:'Age in months', unit:'months', min:0},
+  {id:'A1', n:1, sec:'A · Child identification and demographics', type:'date', q:'Child date of birth',
+     help:'Age in months is calculated automatically. Children older than 59 months are not eligible.'},
+  {id:'A2', n:2, sec:'A · Child identification and demographics', type:'agecalc', q:'Age in months (auto)',
+     help:'Calculated from date of birth.', from:a=>ageMonths(a.A1)},
+  {id:'A2b',n:2, sec:'A · Child identification and demographics', type:'agegroup', q:'Age group (auto)',
+     help:'Set from age. A control must be in the same age group as its case.', from:a=>ageGroupOf(a.A1)},
   {id:'A3', n:3, sec:'A · Child identification and demographics', type:'choice', q:'Sex', options:['Male','Female']},
-  {id:'A4a',n:4, sec:'A · Child identification and demographics', type:'autofill', q:'Residence — District',
+  {id:'A4a',n:4, sec:'A · Child identification and demographics', type:'autofill', q:'Residence district',
      help:'Set automatically from the hospital.', from:a=>hospDistrict(a.hospital)},
-  {id:'A4b',n:4, sec:'A · Child identification and demographics', type:'text',   q:'Residence — Community', ph:'Community'},
-  {id:'A4c',n:4, sec:'A · Child identification and demographics', type:'choice', q:'Residence', options:['Urban','Rural']},
+  {id:'A4b',n:4, sec:'A · Child identification and demographics', type:'text',   q:'Residence community', ph:'Community'},
+  {id:'A4c',n:4, sec:'A · Child identification and demographics', type:'choice', q:'Residence',
+     options:['Urban','Urban slums','Peri-Urban','Rural']},
   {id:'A5', n:5, sec:'A · Child identification and demographics', type:'choice', q:'Referral mode',
      options:['Direct / walk-in','Referred from CHW','Referred from PHU','Referred from hospital']},
 
@@ -328,12 +421,16 @@ const CRF=[
   {id:'B6', n:6, sec:'B · History of present illness', type:'date',   q:'Date of fever onset'},
   {id:'B7', n:7, sec:'B · History of present illness', type:'multi',  q:'Other symptoms before admission',
      help:'Tick all that apply.',
-     options:['Vomiting','Convulsions','Difficulty breathing','Poor feeding','Lethargy','Unconsciousness','Diarrhoea'], other:true},
+     options:['Headache','Vomiting','Convulsions','Difficulty breathing','Poor feeding','Lethargy','Unconsciousness','Diarrhoea'], other:true},
   {id:'B8', n:8, sec:'B · History of present illness', type:'number', q:'Days ill before admission', unit:'days', min:0},
-  {id:'B9v',n:9, sec:'B · History of present illness', type:'multi',  q:'Vaccination history — Malaria vaccine doses',
+  {id:'B9v',n:9, sec:'B · History of present illness', type:'multi',  q:'History of malaria vaccine, doses received',
      help:'Tick each dose received.', options:['Dose 1','Dose 2','Dose 3','Dose 4'], none:'None received', optional:true},
-  {id:'B9p',n:9, sec:'B · History of present illness', type:'multi',  q:'Vaccination/PMC history — PMC doses',
-     help:'Tick each dose received.', options:['Dose 1','Dose 2','Dose 3','Dose 4','Dose 5','Dose 6'], none:'None received', optional:true},
+  {id:'B9vVer', sec:'B · History of present illness', type:'choice', q:'Malaria vaccine history verified?',
+     help:'Verified against card / EPI record.', options:['Yes','No'], yn:true, optional:true},
+  {id:'B9p',n:10, sec:'B · History of present illness', type:'multi',  q:'History of PMC, doses received',
+     help:'Perennial Malaria Chemoprevention. Tick each dose received.', options:['Dose 1','Dose 2','Dose 3','Dose 4','Dose 5','Dose 6'], none:'None received', optional:true},
+  {id:'B9pVer', sec:'B · History of present illness', type:'choice', q:'PMC history verified?',
+     help:'Verified against card / record.', options:['Yes','No'], yn:true, optional:true},
 
   /* SECTION C — ADMISSION ASSESSMENT  (the form restarts numbering at 9 here) */
   {id:'C9', n:9, sec:'C · Admission assessment', type:'number', q:'Weight', unit:'kg', min:0, dec:true},
@@ -366,32 +463,38 @@ const CRF=[
   {id:'D22',n:22,sec:'D · Laboratory findings', type:'textarea', q:'Other lab findings', optional:true, ph:'Optional'},
 
   /* SECTION E — TREATMENT AND MONITORING */
-  {id:'E23',n:23,sec:'E · Treatment and monitoring', type:'choice', q:'Antimalarial started', options:['Oral','Parenteral']},
-  {id:'E24',n:24,sec:'E · Treatment and monitoring', type:'text',   q:'Oral — total dose', ph:'Total dose',
-     when:a=>a.E23==='Oral'},
-  {id:'E25',n:25,sec:'E · Treatment and monitoring', type:'choice', q:'Parenteral — route of administration',
-     options:['IV','IM'], when:a=>a.E23==='Parenteral'},
-  {id:'E25b',   sec:'E · Treatment and monitoring', type:'text',   q:'Parenteral — total dose', ph:'Total dose',
-     when:a=>a.E23==='Parenteral'},
+  {id:'E23',n:23,sec:'E · Treatment and monitoring', type:'multi', q:'Antimalarial started',
+     help:'Tick all that apply — oral, parenteral, or both.', options:['Oral','Parenteral']},
+  {id:'E23o',   sec:'E · Treatment and monitoring', type:'choice', q:'Type of oral antimalarial',
+     options:['AL','ASAQ','SP+ASAQ','DP'], when:a=>Array.isArray(a.E23)&&a.E23.indexOf('Oral')>-1},
+  {id:'E24',n:24,sec:'E · Treatment and monitoring', type:'text',   q:'Oral total dose', ph:'Total dose',
+     when:a=>Array.isArray(a.E23)&&a.E23.indexOf('Oral')>-1},
+  {id:'E23p',   sec:'E · Treatment and monitoring', type:'choice', q:'Type of parenteral antimalarial',
+     options:['Artemether lumefantrine','Artesunate'], when:a=>Array.isArray(a.E23)&&a.E23.indexOf('Parenteral')>-1},
+  {id:'E25',n:25,sec:'E · Treatment and monitoring', type:'choice', q:'Parenteral route of administration',
+     options:['IV','IM'], when:a=>Array.isArray(a.E23)&&a.E23.indexOf('Parenteral')>-1},
+  {id:'E25b',   sec:'E · Treatment and monitoring', type:'text',   q:'Parenteral total dose', ph:'Total dose',
+     when:a=>Array.isArray(a.E23)&&a.E23.indexOf('Parenteral')>-1},
+  {id:'E26d',   sec:'E · Treatment and monitoring', type:'date',   q:'Date first dose given'},
   {id:'E26',n:26,sec:'E · Treatment and monitoring', type:'time',   q:'Time first dose given'},
   {id:'E27',n:27,sec:'E · Treatment and monitoring', type:'multi',  q:'Supportive treatment given',
      help:'Tick all that apply.',
      options:['Blood transfusion','IV fluids','Antibiotics','Anticonvulsants','Oxygen','Glucose','Antipyretics'], other:true},
   {id:'E28',n:28,sec:'E · Treatment and monitoring', type:'progress',
-     q:'Daily progress notes — Days 1 to 5',
+     q:'Daily progress notes, Days 1 to 5',
      help:'General wellbeing, parasite density and haemoglobin for each day. Leave later days blank if not applicable.',
-     optional:true},
+     optional:true, when:a=>isCase(a)},
 
-  /* SECTION F — OUTCOME */
-  {id:'F29',n:29,sec:'F · Outcome', type:'choice', q:'Outcome', options:['Recovered','Died','Referred','Absconded']},
-  {id:'F30',n:30,sec:'F · Outcome', type:'date',   q:'Date of outcome'},
-  {id:'F31',n:31,sec:'F · Outcome', type:'number', q:'Total length of stay', unit:'days', min:0}
+  /* SECTION F — OUTCOME  (cases only; controls end at Q27) */
+  {id:'F29',n:29,sec:'F · Outcome', type:'choice', q:'Outcome', options:['Recovered','Died','Referred','Absconded'], when:a=>isCase(a)},
+  {id:'F30',n:30,sec:'F · Outcome', type:'date',   q:'Date of outcome', when:a=>isCase(a)},
+  {id:'F31',n:31,sec:'F · Outcome', type:'number', q:'Total length of stay', unit:'days', min:0, when:a=>isCase(a)}
 ];
 
 /* ---------- Instrument 2: Caregiver Questionnaire ---------- */
 const CGQ=[
   {id:'G0', n:0, sec:'Caregiver interview', type:'date', q:'Date of caregiver interview',
-     help:'To be administered within 24–72 hours of admission.'},
+     help:'To be administered within 24 to 72 hours of admission.'},
 
   /* A — caregiver */
   {id:'G1', n:1, sec:'A · Caregiver information', type:'choice', q:'Relationship to child',
@@ -407,12 +510,12 @@ const CGQ=[
   {id:'G7a',n:7, sec:'B · Household / socio-economic', type:'autofill', q:'District',
      help:'Set automatically from the hospital.', from:a=>hospDistrict(a.hospital)},
   {id:'G7b',n:7, sec:'B · Household / socio-economic', type:'text',   q:'Community', ph:'Community'},
-  {id:'G7c',n:7, sec:'B · Household / socio-economic', type:'choice', q:'Residence type', options:['Urban','Rural']},
+  {id:'G7c',n:7, sec:'B · Household / socio-economic', type:'choice', q:'Residence type', options:['Urban','Urban slums','Peri-Urban','Rural']},
   {id:'G8', n:8, sec:'B · Household / socio-economic', type:'multi',  q:'Household assets',
      help:'Tick all that apply.', options:['Radio','Television','Bicycle','Motorcycle','Car','Electricity','Mobile phone'], none:'None of these'},
   {id:'G9a',n:9, sec:'B · Household / socio-economic', type:'choice', q:'Roof material', options:['Thatch','Iron sheet','Concrete']},
-  {id:'G9b',n:9, sec:'B · Household / socio-economic', type:'choice', q:'Wall material', options:['Mud','Iron sheet','Brick','Cement']},
-  {id:'G9c',n:9, sec:'B · Household / socio-economic', type:'choice', q:'Floor material', options:['Earth','Cement','Tile']},
+  {id:'G9b',n:9, sec:'B · Household / socio-economic', type:'choice', q:'Wall material', options:['Mud','Wooden','Iron sheet','Brick','Cement']},
+  {id:'G9c',n:9, sec:'B · Household / socio-economic', type:'choice', q:'Floor material', options:['Earth','Wooden','Cement','Tile']},
 
   /* C — care-seeking */
   {id:'G10',n:10,sec:'C · Care-seeking behaviour', type:'date',   q:'When did the child first develop fever or symptoms?'},
@@ -435,7 +538,7 @@ const CGQ=[
   {id:'G17',n:17,sec:'C · Care-seeking behaviour', type:'choice', q:'Mode of transport to hospital',
      options:['Walking','Bike','Motorbike','Car','Ambulance'], other:true},
   {id:'G18',n:18,sec:'C · Care-seeking behaviour', type:'choice', q:'Estimated travel time to hospital',
-     options:['Less than 30 min','30–60 min','1–2 hrs','More than 2 hrs']},
+     options:['Less than 30 min','30 to 60 min','1 to 2 hrs','More than 2 hrs']},
   {id:'G19',n:19,sec:'C · Care-seeking behaviour', type:'number', q:'Estimated distance to hospital', unit:'km', min:0, max:500, dec:true},
 
   /* D — prevention */
@@ -445,7 +548,7 @@ const CGQ=[
   {id:'G22',n:22,sec:'D · Malaria prevention practices', type:'choice', q:'Source of net',
      options:['ANC','EPI','Mass campaign','School-based distribution (SBD)','Purchase'], when:a=>a.G20==='Yes'},
   {id:'G23',n:23,sec:'D · Malaria prevention practices', type:'choice', q:'When was the net obtained?',
-     options:['Less than 1 year ago','1–2 years ago','More than 2 years ago',"Don't know"], when:a=>a.G20==='Yes'},
+     options:['Less than 1 year ago','1 to 2 years ago','More than 2 years ago',"Don't know"], when:a=>a.G20==='Yes'},
   {id:'G24',n:24,sec:'D · Malaria prevention practices', type:'choice', q:'Has the household received indoor residual spraying in the past 12 months?',
      options:['Yes','No',"Don't know"], yn:true},
   {id:'G25',n:25,sec:'D · Malaria prevention practices', type:'multi',  q:'Ways to prevent malaria',
@@ -468,14 +571,51 @@ const CGQ=[
   {id:'G32',n:32,sec:'F · Environmental factors', type:'textarea', q:'Additional comments', optional:true, ph:'Optional'}
 ];
 
-const ALL=SCREENING.concat(CRF).concat(CGQ);
+/* caregiver questionnaire with the name fields leading the caregiver-info page */
+const CGQ_FULL=[CGQ[0]].concat(CG_NAME).concat(CGQ.slice(1));
+
+const ALL=[F_CHILD_FIRST,F_CHILD_MIDDLE,F_CHILD_LAST,F_ENROLDATE,F_ENROLTIME,F_INTERVIEWER]
+  .concat(ENROL_META).concat(CRF).concat(CG_NAME).concat(CGQ);
 const byId=id=>ALL.find(q=>q.id===id);
+/* join name parts into a single display name */
+function fullName(first,middle,last){ return [first,middle,last].map(s=>String(s||'').trim()).filter(Boolean).join(' '); }
+/* normalise a record's child name for duplicate comparison */
+function normName(r){
+  const nm=r.childName||fullName(r.childFirst,r.childMiddle,r.childLast);
+  return String(nm||'').trim().toLowerCase().replace(/\s+/g,' ');
+}
+/* a child (same first/middle/last name AND same date of birth) may be enrolled
+   only once across the whole study — as a case OR a control, never twice */
+function findDuplicate(a){
+  const nm=normName(a), dob=String(a.A1||'').trim();
+  if(!nm||!dob) return null;
+  const all=records.concat(Array.isArray(dashData)?dashData:[]);
+  return all.find(r=>String(r._id)!==String(a.studyId) && normName(r)===nm && String(r.A1||'').trim()===dob) || null;
+}
+/* age in whole months from a date-of-birth string */
+function ageMonths(dob){
+  if(!dob) return '';
+  const b=new Date(dob), now=new Date();
+  if(isNaN(b)) return '';
+  let m=(now.getFullYear()-b.getFullYear())*12+(now.getMonth()-b.getMonth());
+  if(now.getDate()<b.getDate()) m--;
+  return m<0?'':m;
+}
+function eligible(a){ const m=ageMonths(a.A1); return !(m!=='' && m>59); }
+/* three study age bands, chosen automatically from age in months */
+function ageGroupOf(dob){
+  const m=ageMonths(dob);
+  if(m===''||m>59) return '';
+  if(m<=11) return '0 to 11 months';
+  if(m<=23) return '12 to 23 months';
+  return '24 to 59 months';
+}
 function isCase(a){ return String(a.group||'').indexOf('Case')===0; }
 function isControl(a){ return String(a.group||'').indexOf('Control')===0; }
 
-/* ---- pages: screening, then one page per section ---- */
+/* ---- one combined form: enrolment head, then CRF, then caregiver section ---- */
 function pages(){
-  const p=[{key:'screen', title:'Enrolment & eligibility', items:SCREENING}];
+  const p=[{key:'screen', title:'Enrolment & child', items:HEAD}];
   const push=(list,inst)=>{
     let cur=null;
     list.forEach(q=>{
@@ -483,16 +623,18 @@ function pages(){
       cur.items.push(q);
     });
   };
-  push(CRF,1); push(CGQ,2);
+  push(CRF,1); push(CGQ_FULL,2);
   return p;
 }
-const PAGES=pages();
+let PAGES=[];   /* computed after `ans` exists */
 
 /* ---------- state ---------- */
 const app=document.getElementById('app');
 let ans={}, pg=0;
+PAGES=pages();
 let dashData=[], dashSrc='device', dashLoading=false, dashF='all';
 let listF='all', detail=-1;
+let curHosp=null;   /* facility selected on the enrol screen */
 
 const I={
  home:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
@@ -503,6 +645,7 @@ const I={
  arrow:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
  check:'<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>',
  tick:'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>',
+ tick2:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>',
  refresh:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>',
  cloud:'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M17 18a4 4 0 0 0 .5-7.97A6 6 0 0 0 6 9a4.5 4.5 0 0 0 .5 9H17z"/></svg>',
  empty:'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4"/></svg>'
@@ -513,23 +656,36 @@ const nowHM=()=>new Date().toTimeString().slice(0,5);
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200);}
 
 function hospCode(name){const h=HOSPITALS.find(x=>x.name===name);return h?h.code:'XXX';}
-/* Sequence counts the sheet (all devices) where available, falling back to
-   this device when offline, so two phones at the same hospital don't both
-   mint -001. The server also de-duplicates on write. */
+/* Matched design IDs:
+     Case    -> "Case N"   (N = next case number 1–115, counted across all
+                            sites/devices via the sheet, falling back to this
+                            device when offline; the server de-duplicates too)
+     Control -> "Control Na" / "Control Nb"  (N = the matched case number the
+                            fieldworker enters, slot = a or b)
+   The caregiver of each child shares the number: see caregiverId(). */
 function genStudyId(a){
-  if(!a.hospital||!a.group) return '';
-  const code=hospCode(a.hospital), g=isCase(a)?'CA':'CO', wantCase=isCase(a);
-  const live = (liveCounts&&liveCounts!=='error')
-    ? dashData.filter(r=>r.hospital===a.hospital && (String(r._group)==='Case')===wantCase).length : 0;
-  const local = records.filter(r=>r.hospital===a.hospital && isCase(r)===wantCase).length;
-  const seq=Math.max(live,local)+1;
-  return code+'-'+g+'-'+String(seq).padStart(3,'0');
+  if(!a.group) return '';
+  if(isCase(a)){
+    if(a.setNo!=null && a.setNo!=='') return 'Case '+parseInt(a.setNo,10);
+    const live = (liveCounts&&liveCounts!=='error')
+      ? dashData.filter(r=>String(r._form||'child')!=='caregiver'&&String(r._group)==='Case').length : 0;
+    const local = records.filter(r=>isCase(r)).length;
+    return 'Case '+(Math.max(live,local)+1);
+  }
+  const n=parseInt(a.matchCase,10);
+  const slot=String(a.ctrlSlot||'').trim().toLowerCase();
+  if(!n||(slot!=='a'&&slot!=='b')) return '';
+  return 'Control '+n+slot;
 }
+function idPlaceholder(a){
+  return isControl(a) ? '— enter matched case number and slot —' : '— select study group first —';
+}
+function formId(a){ return genStudyId(a); }
 
 /* ---------- visibility + validation ---------- */
 function visible(q){ return !q.when || q.when(ans); }
 function answered(q){
-  if(q.optional||q.type==='auto'||q.type==='note'||q.type==='progress') return true;
+  if(q.optional||q.type==='auto'||q.type==='agecalc'||q.type==='agegroup'||q.type==='note'||q.type==='progress') return true;
   if(q.type==='autofill') return !!String(q.from(ans)||'').trim();
   const v=ans[q.id];
   if(q.type==='multi'){
@@ -558,17 +714,19 @@ function loadCounts(){
     countsLoading=false;
     if(rows&&Array.isArray(rows)){
       dashData=rows; dashSrc='live';
+      const child=r=>String(r._form||'child')!=='caregiver';   /* legacy rows = child */
       liveCounts={
-        cases: rows.filter(r=>String(r._group)==='Case').length,
-        ctrls: rows.filter(r=>String(r._group)==='Control').length,
+        cases: rows.filter(r=>child(r)&&String(r._group)==='Case').length,
+        ctrls: rows.filter(r=>child(r)&&String(r._group)==='Control').length,
         byHosp: HOSPITALS.map(h=>({
           h:h,
-          cases: rows.filter(r=>r.hospital===h.name&&String(r._group)==='Case').length,
-          ctrls: rows.filter(r=>r.hospital===h.name&&String(r._group)==='Control').length
+          cases: rows.filter(r=>child(r)&&r.hospital===h.name&&String(r._group)==='Case').length,
+          ctrls: rows.filter(r=>child(r)&&r.hospital===h.name&&String(r._group)==='Control').length
         }))
       };
     } else { liveCounts='error'; }
-    if(document.querySelector('.quota')) renderHome();
+    if(document.querySelector('.set-grid')) renderSets();
+    else if(document.querySelector('.quota')) renderHome();
   });
 }
 function renderHome(){
@@ -606,9 +764,9 @@ function renderHome(){
           <div class="hs-key">cases / target · controls / target</div></div>`:''}
       </div>
       <p class="section-eyebrow">What would you like to do?</p>
-      <button class="action-card" onclick="startNew()">
+      <button class="action-card" onclick="openEnrol()">
         <span class="ic b">${I.clip}</span>
-        <span class="tx"><h3>Enrol a child</h3><span>Case report form + caregiver questionnaire</span></span>
+        <span class="tx"><h3>Enrol a child</h3><span>Choose facility · then its matched sets</span></span>
         <span class="arrow">${I.arrow}</span></button>
       <button class="action-card" onclick="openList()">
         <span class="ic y">${I.list}</span>
@@ -646,15 +804,201 @@ function setGAS(){
 }
 
 /* =========================================================
+   MATCHED-SET CARDS  (115 sets, unlocked in sequence)
+   ---------------------------------------------------------
+   Each set = 1 case + 2 controls (a, b), all sharing one number.
+   Rules the fieldworker asked for:
+     • 115 cards, all closed; only the current one opens.
+     • Within a card the CASE must be done first — the two controls
+       stay locked until the case is recorded.
+     • A card cannot be started until the one before it is complete,
+       so Case 3 can't be taken before Cases 1 and 2.
+   Completion is read from this device AND the live sheet, so a set
+   another phone already finished counts as done here too.
+   ========================================================= */
+const TOTAL_SETS=115;
+function childIdOf(setNo,kind){ return kind==='case' ? 'Case '+setNo : 'Control '+setNo+kind; }
+/* which slot a saved record is: 'case', 'a' or 'b' */
+function slotKindOf(r){
+  if(isCase(r)||String(r._group)==='Case') return 'case';
+  if(r.ctrlSlot==='a'||r.ctrlSlot==='b') return r.ctrlSlot;
+  const last=String(r._id||'').slice(-1);
+  return (last==='a'||last==='b')?last:'a';
+}
+function recDone(id){
+  return records.some(r=>String(r._id)===id) ||
+         (Array.isArray(dashData)&&dashData.some(r=>String(r._id)===id));
+}
+function childNameOf(setNo,kind){
+  const id=childIdOf(setNo,kind);
+  const r=records.find(x=>String(x._id)===id) || (Array.isArray(dashData)&&dashData.find(x=>String(x._id)===id));
+  return r&&r.childName?r.childName:'';
+}
+function setState(n){
+  const caseDone=recDone(childIdOf(n,'case')), aDone=recDone(childIdOf(n,'a')), bDone=recDone(childIdOf(n,'b'));
+  const filled=(caseDone?1:0)+(aDone?1:0)+(bDone?1:0);
+  return {caseDone,aDone,bDone,filled,complete:caseDone&&aDone&&bDone};
+}
+/* first not-complete set WITHIN a facility's block — the only one you may start
+   there. Locking is per-facility, so the four sites progress independently. */
+function currentSetIn(h){ const [s,e]=setRange(h); for(let n=s;n<=e;n++){ if(!setState(n).complete) return n; } return e+1; }
+function currentSet(){ return curHosp?currentSetIn(curHosp):1; }
+function setUnlocked(n){ const h=hospForSet(n); return n<=currentSetIn(h) || setState(n).complete; }
+function hospProgress(h){
+  const [s,e]=setRange(h); let complete=0,cases=0,ctrls=0;
+  for(let n=s;n<=e;n++){ const st=setState(n); if(st.complete)complete++; if(st.caseDone)cases++; ctrls+=(st.aDone?1:0)+(st.bDone?1:0); }
+  return {complete,cases,ctrls,cur:currentSetIn(h)};
+}
+
+/* Step 1 — choose the facility. Step 2 — that facility's own set list. */
+function openEnrol(){ if(GAS_URL) loadCounts(); renderFacilities(); }
+function renderFacilities(){
+  const hd=`<div class="appbar"><button class="ico-btn" onclick="renderHome()">${I.home}</button>
+    <div class="titles"><div class="eyebrow">Step 1 · choose facility</div><div class="title">Enrol a child</div></div>
+    <button class="ico-btn" onclick="openEnrol()">${I.refresh}</button></div>`;
+  let cards='';
+  HOSPITALS.forEach(h=>{
+    const [s,e]=setRange(h), p=hospProgress(h), pct=Math.round(p.complete/h.cases*100);
+    const doneAll=p.complete>=h.cases;
+    cards+=`<button class="action-card" onclick="openSets('${h.code}')">
+      <span class="ic ${doneAll?'g':'b'}">${doneAll?I.tick2:I.clip}</span>
+      <span class="tx"><h3>${esc(h.name)}</h3>
+        <span>Sets ${s}–${e} · ${p.complete}/${h.cases} sets complete${doneAll?' ✓':''}</span>
+        <div class="qtrack" style="margin-top:8px"><div class="qfill case" style="width:${pct}%"></div></div>
+      </span>
+      <span class="arrow">${I.arrow}</span></button>`;
+  });
+  app.innerHTML=hd+`<div class="body"><div class="list">
+    <h2>Which facility?</h2>
+    <div class="sets-note">Pick the facility you're enrolling at. Each has its own set list and progresses on its own — you don't have to finish one facility before another.</div>
+    ${cards}
+  </div></div>`;
+}
+
+function openSets(code){
+  if(code){ curHosp=HOSPITALS.find(h=>h.code===code)||curHosp; }
+  if(!curHosp){ renderFacilities(); return; }
+  if(GAS_URL) loadCounts();
+  renderSets();
+}
+function renderSets(){
+  if(!curHosp){ renderFacilities(); return; }
+  const h=curHosp, [s,e]=setRange(h), cur=currentSetIn(h), done=cur-s;
+  const hd=`<div class="appbar"><button class="ico-btn" onclick="renderFacilities()">${I.back}</button>
+    <div class="titles"><div class="eyebrow">${esc(h.code)} · sets in order</div><div class="title">${esc(h.name)}</div></div>
+    <button class="ico-btn" onclick="openSets()">${I.refresh}</button></div>`;
+  const card=n=>{
+    const st=setState(n), isCur=(n===cur);
+    const cls=st.complete?'complete':isCur?'current':setUnlocked(n)?'':'locked';
+    const badge=st.complete?'Complete':isCur?'Current':setUnlocked(n)?'Open':'Locked';
+    const nextK = isCur ? (!st.caseDone?'case':!st.aDone?'a':!st.bDone?'b':'') : '';
+    return `<button class="set-card ${cls}" onclick="tapSet(${n})">
+      <div class="sc-top"><span class="sc-no">Set ${n}</span><span class="sc-badge">${badge}</span></div>
+      <div class="dots">
+        <div class="${st.caseDone?'d done':nextK==='case'?'d next':'d'}"></div>
+        <div class="${st.aDone?'d done':nextK==='a'?'d next':'d'}"></div>
+        <div class="${st.bDone?'d done':nextK==='b'?'d next':'d'}"></div>
+      </div>
+      <div class="sc-lbl"><span>Case</span><span>Ctrl a</span><span>Ctrl b</span></div>
+    </button>`;
+  };
+  let cards=''; for(let n=s;n<=e;n++) cards+=card(n);
+  const noteHtml = cur>e
+    ? `All ${h.cases} sets complete for ${esc(h.name)} — ${h.cases} cases and ${h.cases*2} controls.`
+    : `${done} of ${h.cases} sets complete. Open <b>Set ${cur}</b> to continue — case first, then the two controls. Later sets stay locked until this one is finished.`;
+  app.innerHTML=hd+`<div class="body"><div class="list">
+    <div class="set-sec"><span class="hn">Sets ${s}–${e}</span><span class="rg">${esc(h.district)}</span></div>
+    <div class="sets-note">${noteHtml}</div>
+    <div class="set-grid">${cards}</div>
+  </div></div>`;
+}
+function tapSet(n){
+  if(!setUnlocked(n)){ toast('Finish Set '+currentSetIn(hospForSet(n))+' first'); return; }
+  renderSet(n);
+}
+function renderSet(n){
+  curHosp=hospForSet(n);
+  const st=setState(n), h=hospForSet(n);
+  /* one combined form per person (child CRF + embedded caregiver section) */
+  const slot=(kind,label)=>{
+    const id=childIdOf(n,kind), isC=kind==='case';
+    const done = kind==='case'?st.caseDone : kind==='a'?st.aDone : st.bDone;
+    const name=childNameOf(n,kind);
+    const locked=!isC && !st.caseDone;                 /* controls wait for the case */
+    const icon=done?I.tick2:(isC?'CA':'C'+kind);
+    const iCls=locked?'lock':(isC?'case':'ctrl');
+    const sub=done?(name?esc(name)+' · recorded':'recorded'):(locked?'complete the case first':'child + caregiver in one form');
+    const status=done?`<span class="stt done">Done</span>`
+               : locked?`<span class="stt wait">Case first</span>`
+               : `<span class="stt go">Start</span>`;
+    const click=done?`onclick="viewById('${id}')"`:locked?'':`onclick="startForm(${n},'${kind}')"`;
+    return `<button class="slot ${done||!locked?'tap':'locked'}" ${click}>
+      <span class="si ${done?(isC?'case':'ctrl'):iCls}">${icon}</span>
+      <span class="st"><h3>${label}</h3><span class="cg">${sub}</span></span>
+      ${status}</button>`;
+  };
+  const hd=`<div class="appbar"><button class="ico-btn" onclick="renderSets()">${I.back}</button>
+    <div class="titles"><div class="eyebrow">${esc(h.code)} · matched set</div><div class="title">Set ${n}</div></div>
+    <img class="bar-logo" src="${LOGO}" alt="ICF-SL"></div>`;
+  app.innerHTML=hd+`<div class="body"><div class="list">
+    <div class="set-head"><div class="id">Set ${n}${st.complete?' · complete':''}</div>
+      <div class="meta">${esc(h.name)} · ${esc(h.district)}<br>One case and two matched controls. Each form covers the child (CRF) and its caregiver in one go. The case must be recorded before the controls open.</div></div>
+    ${slot('case','Case '+n)}
+    ${slot('a','Control '+n+'a')}
+    ${slot('b','Control '+n+'b')}
+  </div></div>`;
+}
+/* open a saved record straight from its ID */
+function viewById(id){
+  const i=records.findIndex(r=>String(r._id)===id);
+  if(i>-1){ detail=i; renderRec(); return; }
+  toast(id+' is recorded (on another device / the sheet)');
+}
+/* Context carried from a set's CASE into its CONTROLS as editable prefills, so
+   shared "where/how they live" details aren't retyped. Never carries the child's
+   identity/DOB/sex/clinical data or the caregiver's own details. */
+const CARRY_FIELDS=['A4b','A4c','G1','G2','G3','G4','G5','G6','G7b','G7c','G8','G9a','G9b','G9c','G20','G22','G23','G24','G28','G29','G30','G31'];
+function copyFields(src,fields){
+  if(!src) return false;
+  const clone=v=>Array.isArray(v)?v.slice():v; let any=false;
+  fields.forEach(fid=>{
+    if(src[fid]!==undefined&&src[fid]!==null&&src[fid]!==''){ ans[fid]=clone(src[fid]); any=true; }
+    const ot=fid+'_other'; if(src[ot]!==undefined&&src[ot]!=='') ans[ot]=src[ot];
+  });
+  return any;
+}
+function recById(id){ return records.find(r=>String(r._id)===id) || (Array.isArray(dashData)&&dashData.find(r=>String(r._id)===id)); }
+
+function startForm(setNo,kind){
+  curHosp=hospForSet(setNo);
+  if(!setUnlocked(setNo)){ toast('Finish Set '+currentSetIn(curHosp)+' first'); return; }
+  if(kind!=='case' && !setState(setNo).caseDone){ toast('Do the case first'); return; }
+  const id=childIdOf(setNo,kind);
+  if(recDone(id)){ viewById(id); return; }
+  ans={ interviewer:interviewer||'', setNo:setNo,
+        group: kind==='case'?'Case (severe malaria, admitted)':'Control (uncomplicated, OPD)',
+        hospital:hospForSet(setNo).name, enrolDate:todayISO(), enrolTime:nowHM(), G0:todayISO() };
+  if(kind!=='case'){ ans.matchCase=setNo; ans.ctrlSlot=kind; }
+  ans.studyId=genStudyId(ans);
+  PAGES=pages(); pg=0; lastVis='';
+  if(kind!=='case'){
+    const caseRec=recById('Case '+setNo);
+    ans._reqGroup = caseRec ? (caseRec.A2b || ageGroupOf(caseRec.A1)) : '';   /* control must match case age group */
+    if(copyFields(recById('Case '+setNo),CARRY_FIELDS))
+      setTimeout(()=>toast('Shared details copied from Case '+setNo+' — edit any that differ'),300);
+  }
+  saveDraft(); renderPage();
+}
+
+/* =========================================================
    FORM
    ========================================================= */
-function startNew(){
-  ans={enrolDate:todayISO(), enrolTime:nowHM(), interviewer:interviewer||'', G0:todayISO()};
-  pg=0; saveDraft(); renderPage();
-}
+/* Kept for compatibility (empty-state buttons): route to the sets screen,
+   since group/number are now chosen by opening a card, not typed in. */
+function startNew(){ openEnrol(); }
 function resumeDraft(){
   const d=Store.get(DRAFT_KEY,null); if(!d){renderHome();return;}
-  ans=d.ans||{}; pg=d.pg||0; renderPage();
+  ans=d.ans||{}; PAGES=pages(); pg=d.pg||0; renderPage();
 }
 function saveDraft(){ Store.set(DRAFT_KEY,{ans:ans,pg:pg}); }
 function discardDraft(){ Store.del(DRAFT_KEY); }
@@ -664,8 +1008,8 @@ function ctl(q){
   if(q.type==='note') return `<div class="skip-note">${esc(q.help||'')}</div>`;
 
   if(q.type==='auto'){
-    const val=genStudyId(ans); ans.studyId=val;
-    return `<div class="field"><input type="text" id="autoId" readonly value="${esc(val||'— select hospital and group first —')}"></div>`;
+    const val=formId(ans); ans.studyId=val;
+    return `<div class="field"><input type="text" id="autoId" readonly value="${esc(val||idPlaceholder(ans))}"></div>`;
   }
   if(q.type==='choice'){
     let h='<div class="opts">'+q.options.map(o=>{
@@ -692,7 +1036,10 @@ function ctl(q){
     let h='';
     for(let d=1;d<=5;d++){
       h+=`<div class="sub-lbl">Day ${d}</div>
-        <div class="field" style="margin-bottom:6px"><input type="text" placeholder="General wellbeing" data-k="E28_d${d}_well" value="${esc(ans['E28_d'+d+'_well']||'')}"></div>
+        <div class="field" style="margin-bottom:6px"><select data-k="E28_d${d}_well">
+          <option value="">General wellbeing</option>
+          ${['Fever','Convulsion','Lethargy'].map(o=>`<option ${ans['E28_d'+d+'_well']===o?'selected':''}>${esc(o)}</option>`).join('')}
+        </select></div>
         <div class="grid2" style="margin-bottom:10px">
           <div class="field"><input type="number" placeholder="Parasite density" data-k="E28_d${d}_pd" value="${esc(ans['E28_d'+d+'_pd']||'')}"></div>
           <div class="field"><input type="number" step="0.1" placeholder="Hb (g/dL)" data-k="E28_d${d}_hb" value="${esc(ans['E28_d'+d+'_hb']||'')}"></div>
@@ -704,6 +1051,20 @@ function ctl(q){
     const val=q.from(ans)||'';
     ans[q.id]=val;
     return `<div class="field"><input type="text" data-auto="${q.id}" readonly value="${esc(val||'— select a hospital first —')}"></div>`;
+  }
+  if(q.type==='agecalc'){
+    const val=q.from(ans); ans[q.id]=(val===''?'':val);
+    const over=(val!==''&&val>59);
+    const txt = val===''?'— enter date of birth —':(val+' month'+(val===1?'':'s'));
+    return `<div class="field"><input type="text" data-auto="${q.id}" readonly value="${esc(txt)}">
+      ${over?`<div class="inelig">⚠ ${val} months — older than 59 months. This child is <b>not eligible</b>; enrolment cannot continue.</div>`:''}</div>`;
+  }
+  if(q.type==='agegroup'){
+    const val=q.from(ans); ans[q.id]=val||'';
+    const need = isControl(ans)&&ans._reqGroup ? ans._reqGroup : '';
+    const mism = need && val && val!==need;
+    return `<div class="field"><input type="text" data-auto="${q.id}" readonly value="${esc(val||'— enter date of birth —')}">
+      ${need?`<div class="inelig ${mism?'':'ok'}" style="${mism?'':'background:var(--ok-bg);border-color:#bfe6c8;color:var(--ok)'}">Must match the case: <b>${esc(need)}</b>${mism?' — mismatch':''}</div>`:''}</div>`;
   }
   if(q.type==='select'){
     return `<div class="field"><select data-k="${q.id}">
@@ -736,11 +1097,12 @@ function renderPage(){
   const P=PAGES[pg], items=pageItems(pg);
   const total=PAGES.length, pct=Math.round(pg/total*100);
   const grp=ans.group?(isCase(ans)?'<span class="tag-pill case">CASE</span>':'<span class="tag-pill ctrl">CONTROL</span>'):'';
+  const childRef = (ans.childName?esc(ans.childName)+' ':'')+'('+esc(ans.studyId||'')+')';
   const banner = P.inst===1
-    ? `<div class="inst-banner i1"><div class="n">Instrument 1</div><h2>Case Report Form</h2><p>Prospective structured CRF — completed by the clinician from examination and the medical record.</p></div>`
+    ? `<div class="inst-banner i1"><div class="n">Instrument 1 · CRF</div><h2>Case Report Form</h2><p>Clinical form for the child, completed by the clinician from examination and the medical record.</p></div>`
     : P.inst===2
-      ? `<div class="inst-banner i2"><div class="n">Instrument 2</div><h2>Caregiver Questionnaire</h2><p>Administered to the parent or guardian within 24–72 hours of admission.</p></div>`
-      : `<div class="inst-banner i1"><div class="n">Step 1</div><h2>Enrolment &amp; eligibility</h2><p>Confirm the child meets all inclusion criteria before collecting data.</p></div>`;
+      ? `<div class="inst-banner i2"><div class="n">Instrument 2 · same form</div><h2>Caregiver Questionnaire</h2><p>Caregiver section for <b>${childRef}</b> — part of the same record.</p></div>`
+      : `<div class="inst-banner i1"><div class="n">Step 1</div><h2>Enrolment &amp; child</h2><p>Record the child's name and details, then the clinical form and caregiver section.</p></div>`;
   const showBanner = pg===0 || PAGES[pg-1].inst!==P.inst;
 
   app.innerHTML=`<div class="appbar">
@@ -807,8 +1169,21 @@ function afterChange(qid){
   const card=document.getElementById('qc_'+String(qid).split('_')[0]);
   if(card) card.classList.remove('missing');
   const a=document.getElementById('autoId');
-  if(a){ ans.studyId=genStudyId(ans); a.value=ans.studyId||'— select hospital and group first —'; }
+  if(a){ ans.studyId=formId(ans); a.value=ans.studyId||idPlaceholder(ans); }
   prefillDistricts();
+  if(qid==='A1'){                                     /* DOB -> recompute age + group */
+    if(isControl(ans) && ans._reqGroup){
+      const g=ageGroupOf(ans.A1);
+      if(g && g!==ans._reqGroup){
+        const need=ans._reqGroup;
+        delete ans.A1; delete ans.A2; delete ans.A2b;
+        saveDraft(); renderPage();
+        setTimeout(()=>toast('Wrong age group for control — must be '+need+' (same as the case). Date of birth reset.'),60);
+        return;
+      }
+    }
+    saveDraft(); renderPage(); return;
+  }
   if(qid==='interviewer'){ interviewer=ans.interviewer; Store.set(ME_KEY,interviewer); }
   /* a change may open or close later questions -> re-render this page */
   const dependents=PAGES[pg].items.some(q=>q.when);
@@ -852,7 +1227,7 @@ const FLAGS=[
   {id:'C15', test:v=>v<90,    cls:'warn', msg:'SpO₂ below 90%.'},
   {id:'C12', test:v=>v>=37.5, cls:'warn', msg:'Fever present (≥ 37.5 °C).'},
   {id:'C11', test:v=>v<11.5,  cls:'warn', msg:'MUAC < 11.5 cm — severe acute malnutrition.'},
-  {id:'A2',  test:v=>v>59,    cls:'bad',  msg:'Age above 59 months — outside the study age range (0–59 months).'}
+  {id:'A2',  test:v=>v>59,    cls:'bad',  msg:'Age above 59 months, outside the study age range (0 to 59 months).'}
 ];
 function runFlags(){
   FLAGS.forEach(f=>{
@@ -887,14 +1262,48 @@ function nextPage(){
     toast(miss.length+' unanswered question'+(miss.length>1?'s':''));
     return;
   }
-  if(pg===0 && !ans.studyId){ toast('Select hospital and group first'); return; }
-  if(pg===PAGES.length-1){ renderReview(); return; }
-  pg++; lastVis=''; saveDraft(); renderPage();
+  if(!eligible(ans)){ renderIneligible(); return; }
+  if(pg===0 && !ans.studyId){ toast(isControl(ans)?'Enter the matched case number and control slot':'Select the study group'); return; }
+  let np=pg+1;
+  while(np<=PAGES.length-1 && !pageItems(np).length) np++;   /* skip empty sections (e.g. outcome for controls) */
+  if(np>PAGES.length-1){ renderReview(); return; }
+  pg=np; lastVis=''; saveDraft(); renderPage();
   document.querySelector('.body').scrollTop=0;
+}
+/* same child (name + DOB) already recorded -> excluded, not saved */
+function renderDuplicate(dup){
+  const n=ans.setNo?parseInt(ans.setNo,10):null;
+  app.innerHTML=`<div class="body"><div class="done">
+    <div class="circle" style="background:var(--bad-bg);color:var(--bad)">${I.close||'✕'}</div>
+    <h2>Duplicate — not saved</h2>
+    <div class="idbig">${esc(dup._id||'')}</div>
+    <p>A child with the same name and date of birth is already recorded as <b>${esc(dup._id||'')}</b>${dup._group?' ('+esc(dup._group)+')':''}. This entry was excluded and not saved.</p>
+    <div class="actions">
+      ${n!=null?`<button class="btn btn-primary btn-block" onclick="discardDraft();renderSet(${n})">Back to Set ${n}</button>`:''}
+      <button class="btn btn-ghost btn-block" onclick="discardDraft();openEnrol()">Back to enrolment</button>
+      <button class="btn btn-ghost btn-block" onclick="discardDraft();renderHome()">Back to home</button>
+    </div></div></div>`;
+}
+/* child older than 59 months -> not eligible; enrolment ends without saving */
+function renderIneligible(){
+  const n=ans.setNo?parseInt(ans.setNo,10):null;
+  const m=ageMonths(ans.A1);
+  app.innerHTML=`<div class="body"><div class="done">
+    <div class="circle" style="background:var(--bad-bg);color:var(--bad)">${I.close||'✕'}</div>
+    <h2>Not eligible</h2>
+    <div class="idbig">${m} months</div>
+    <p>This child is older than 59 months and cannot be enrolled. The form has been ended and nothing was saved.</p>
+    <div class="actions">
+      ${n!=null?`<button class="btn btn-primary btn-block" onclick="discardDraft();renderSet(${n})">Back to Set ${n}</button>`:''}
+      <button class="btn btn-ghost btn-block" onclick="discardDraft();openEnrol()">Back to enrolment</button>
+      <button class="btn btn-ghost btn-block" onclick="discardDraft();renderHome()">Back to home</button>
+    </div></div></div>`;
 }
 function prevPage(){
   if(pg===0){ if(confirm('Leave this enrolment? It will be saved as a draft you can resume.')){ saveDraft(); renderHome(); } return; }
-  pg--; lastVis=''; saveDraft(); renderPage();
+  let pp=pg-1;
+  while(pp>0 && !pageItems(pp).length) pp--;   /* skip empty sections */
+  pg=pp; lastVis=''; saveDraft(); renderPage();
 }
 
 /* ---------- review ---------- */
@@ -920,6 +1329,7 @@ function renderReview(){
     const val=fmt(q), miss=(val==='—'&&!q.optional);
     body+=`<div class="rv-item"><span class="q">${esc(q.q)}</span><span class="a ${miss?'empty':''}">${esc(val)}</span></div>`;
   });
+  const nm=fullName(ans.childFirst,ans.childMiddle,ans.childLast);
   app.innerHTML=`<div class="appbar">
       <button class="ico-btn" onclick="backFromReview()">${I.back}</button>
       <div class="titles"><div class="eyebrow">Almost done</div><div class="title">Review &amp; submit</div></div>
@@ -927,7 +1337,7 @@ function renderReview(){
     </div>
     <div class="body"><div class="rv">
       <div class="rv-head"><div class="id">${esc(ans.studyId||'—')}</div>
-        <div class="meta">${esc(ans.hospital||'')} · ${esc(ans.enrolDate||'')} ${esc(ans.enrolTime||'')}<br>${esc(ans.interviewer||'')}</div></div>
+        <div class="meta">${nm?esc(nm)+'<br>':''}${esc(ans.hospital||'')} · ${esc(ans.enrolDate||'')} ${esc(ans.enrolTime||'')}<br>${esc(ans.interviewer||'')}</div></div>
       ${body}
     </div></div>
     <div class="footer"><button class="btn btn-primary btn-block" onclick="submitRec()">${GAS_URL?'Submit to Google Sheets':'Save enrolment'}</button></div>`;
@@ -935,9 +1345,15 @@ function renderReview(){
 function backFromReview(){ pg=PAGES.length-1; renderPage(); }
 
 function submitRec(){
+  ans.childName = fullName(ans.childFirst,ans.childMiddle,ans.childLast);
+  ans.cgName    = fullName(ans.cgFirst,ans.cgMiddle,ans.cgLast);
+  const dup=findDuplicate(ans);
+  if(dup){ renderDuplicate(dup); return; }
   const rec=Object.assign({},ans,{
     _id:ans.studyId, _ts:new Date().toISOString(),
     _group:isCase(ans)?'Case':'Control',
+    childName: ans.childName||'',
+    cgName: ans.cgName||'',
     _whoSigns:(Array.isArray(ans.C16)?ans.C16:[]).filter(x=>x!=='None present').join('; '),
     _synced:false                     /* saved here first — always */
   });
@@ -1048,16 +1464,21 @@ function syncNow(){
 }
 function setSync(cls,txt){const e=document.getElementById('syncPill');if(!e)return;e.className='sync '+cls;e.textContent=txt;}
 function renderDone(r){
+  const n=r.setNo?parseInt(r.setNo,10):null;
+  const primary = n!=null
+    ? `<button class="btn btn-primary btn-block" onclick="renderSet(${n})">Back to Set ${n}</button>`
+    : `<button class="btn btn-primary btn-block" onclick="openEnrol()">Back to enrolment</button>`;
+  const line = `${esc(r._id)} · ${esc(r.childName||'')} (${esc(r._group)})<br>Caregiver: ${esc(r.cgName||'—')}`;
   app.innerHTML=`<div class="body"><div class="done">
     <div class="circle">${I.check}</div>
     <h2>Enrolment saved</h2>
     <div class="idbig">${esc(r._id)}</div>
-    <p>${esc(r._group)} · ${esc(r.hospital||'')}<br>Both instruments recorded.</p>
+    <p>${line}</p>
     <span class="sync ${GAS_URL?'checking':'warn'}" id="syncPill">${GAS_URL?'Checking Google Sheet…':'◍ Saved on this device only'}</span>
     <p style="font:400 11.5px/1.5 var(--body);color:var(--muted);max-width:31ch;margin:-8px 0 18px">
       This record is safe on the device. If it hasn’t reached Google Sheets it stays queued and syncs itself when the connection returns.</p>
     <div class="actions">
-      <button class="btn btn-primary btn-block" onclick="startNew()">Enrol next child</button>
+      ${primary}
       <button class="btn btn-ghost btn-block" onclick="openList()">View records</button>
       <button class="btn btn-ghost btn-block" onclick="renderHome()">Back to home</button>
     </div></div></div>`;
@@ -1079,25 +1500,27 @@ function renderList(){
     <img class="bar-logo" src="${LOGO}" alt="ICF-SL"></div>`;
   if(!records.length){
     app.innerHTML=hd+`<div class="body"><div class="list"><div class="empty">
-      <div class="ic">${I.list}</div><h3>No enrolments yet</h3>
-      <p>Children you enrol are saved on this device and listed here.</p>
+      <div class="ic">${I.list}</div><h3>No records yet</h3>
+      <p>Child and caregiver forms you fill are saved on this device and listed here.</p>
       <button class="btn btn-primary btn-block" onclick="startNew()">Enrol a child</button>
     </div></div></div>`;return;
   }
   const rows=lFilt().slice().reverse();
   app.innerHTML=hd+`<div class="body"><div class="list">
-    <h2>Saved enrolments</h2>
-    <div class="sub">${records.length} record${records.length===1?'':'s'} on this device</div>
+    <h2>Saved forms</h2>
+    <div class="sub">${records.length} form${records.length===1?'':'s'} on this device</div>
     <div class="seg">
       <button class="${listF==='all'?'on':''}" onclick="setLF('all')">All</button>
       <button class="${listF==='case'?'on':''}" onclick="setLF('case')">Cases</button>
       <button class="${listF==='ctrl'?'on':''}" onclick="setLF('ctrl')">Controls</button>
     </div>
     <div class="card" style="padding-top:5px">
-      ${rows.length?rows.map(x=>{const r=x.r,c=isCase(r);return `<div class="li" style="cursor:pointer" onclick="openRec(${x.i})">
+      ${rows.length?rows.map(x=>{const r=x.r,c=isCase(r);
+        const line1 = (r.childName||r.A1||'—')+(r.A2!==undefined&&r.A2!==''?' · '+r.A2+' mo':'')+(r.A3?' · '+r.A3:'');
+        return `<div class="li" style="cursor:pointer" onclick="openRec(${x.i})">
         <div class="av">${esc(r._id||'?')}</div>
-        <div class="m"><div class="t">${esc(r.A1||'—')} · ${esc(r.A2||'?')} mo · ${esc(r.A3||'')}</div>
-          <div class="s">${esc(r.hospital||'')} · ${esc(r.enrolDate||'')}</div></div>
+        <div class="m"><div class="t">${esc(line1)}</div>
+          <div class="s">${r.cgName?'Caregiver: '+esc(r.cgName)+' · ':''}${esc(r.hospital||'')}</div></div>
         <span class="pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span>
         <span class="sdot ${r._synced?'ok':'wait'}" title="${r._synced?'Synced to Google Sheets':'Not yet synced'}"></span></div>`;}).join('')
       :'<div style="font:400 12.5px var(--body);color:var(--muted);padding:14px 0">No records in this filter.</div>'}
@@ -1120,12 +1543,14 @@ function renderRec(){
     body+=`<div class="rv-item"><span class="q">${esc(q.q)}</span><span class="a">${esc(fmt(q))}</span></div>`;
   });
   ans=save;
+  const pill = `<span class="tag-pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span>`;
+  const sub = esc(r.childName||'')+(r.cgName?' · caregiver: '+esc(r.cgName):'');
   app.innerHTML=`<div class="appbar"><button class="ico-btn" onclick="renderList()">${I.back}</button>
       <div class="titles"><div class="eyebrow">Enrolment</div><div class="title">${esc(r._id)}</div></div>
-      <span class="tag-pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span></div>
+      ${pill}</div>
     <div class="body"><div class="rv">
       <div class="rv-head"><div class="id">${esc(r._id)}</div>
-        <div class="meta">${esc(r.hospital||'')} · ${esc(r.enrolDate||'')} ${esc(r.enrolTime||'')}<br>${esc(r.interviewer||'')}</div></div>
+        <div class="meta">${sub?sub+'<br>':''}${esc(r.hospital||'')} · ${esc(r.enrolDate||'')} ${esc(r.enrolTime||'')}<br>${esc(r.interviewer||'')}</div></div>
       ${body}
     </div></div>`;
 }
@@ -1235,7 +1660,7 @@ function drawDash(){
    TOOLS
    ========================================================= */
 function csvCols(){
-  const meta=['_id','_ts','_group','hospital','enrolDate','enrolTime','interviewer','_synced'];
+  const meta=['_id','childName','cgName','_ts','_group','hospital','enrolDate','enrolTime','interviewer','_synced'];
   const qs=[]; const hdr=[];
   ALL.forEach(q=>{
     if(q.type==='note'||q.type==='auto') return;
@@ -1247,7 +1672,7 @@ function csvCols(){
     qs.push(q.id); hdr.push(q.q);
     if(q.other){ qs.push(q.id+'_other'); hdr.push(q.q+' — Other (specify)'); }
   });
-  return {cols:meta.concat(qs), hdr:['Study ID','Submitted at','Group','Hospital','Enrolment date','Enrolment time','Interviewer','Synced to Sheets'].concat(hdr)};
+  return {cols:meta.concat(qs), hdr:['ID','Form','Child name','Caregiver name','Linked child ID','Caregiver ID','Submitted at','Group','Hospital','Enrolment date','Enrolment time','Interviewer','Synced to Sheets'].concat(hdr)};
 }
 function exportCSV(data,name){
   if(!data||!data.length){toast('No data to export');return;}
