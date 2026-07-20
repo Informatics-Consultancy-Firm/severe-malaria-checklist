@@ -7,6 +7,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- PWA (installable + offline) -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1b6499">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SM Study">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
 <style>
   :root{
     --sky-50:#f2f8fd; --sky-100:#e3f1fb; --sky-200:#c9e4f7; --sky-300:#9ed0f0;
@@ -778,6 +788,7 @@ function renderHome(){
         <span class="arrow">${I.arrow}</span></button>
       <div style="height:6px"></div>
       <button class="btn btn-ghost btn-block btn-sm" onclick="setGAS()">${GAS_URL?'Google Sheet connected · change':'Connect Google Sheet'}</button>
+      ${((window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true)?'':`<button class="btn btn-primary btn-block btn-sm" style="margin-top:8px" onclick="installApp&&installApp()">⤓ Install app on this device</button>`}
     </div></div>`;
 }
 /* Persistent, honest status of the outbox. */
@@ -1692,6 +1703,64 @@ function clearAll(){
 
 renderHome();
 autoSync();   /* flush anything left over from a previous session */
+</script>
+
+<!-- ── PWA: service worker + install prompt ─────────────────── -->
+<script>
+(function(){
+  // running as an installed app?
+  window.__isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                          || window.navigator.standalone === true;
+
+  // Register the service worker (offline support)
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(function(e){ console.warn('SW register failed', e); });
+    });
+  }
+
+  var deferred=null, DISMISS_KEY='sm_pwa_dismissed';
+  function dismissed(){ try{ return localStorage.getItem(DISMISS_KEY)==='1'; }catch(e){ return false; } }
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  // Called by the top banner Install button AND the home-screen Install button
+  window.installApp = function(){
+    if(window.__isStandalone){ if(window.toast) toast('The app is already installed.'); return; }
+    if(deferred){
+      deferred.prompt();
+      deferred.userChoice.finally(function(){ deferred=null; hideBanner(); });
+      return;
+    }
+    if(isIOS){
+      if(window.toast) toast('On iPhone: tap the Share button, then “Add to Home Screen”.');
+      return;
+    }
+    if(window.toast) toast('Open your browser menu and choose “Install app” / “Add to Home screen”. (Requires the app to be opened from its web address, not a downloaded file.)');
+  };
+
+  function showBanner(){
+    if(document.getElementById('pwaBanner')||dismissed()||window.__isStandalone) return;
+    var b=document.createElement('div');
+    b.id='pwaBanner';
+    b.setAttribute('style','position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;align-items:center;gap:10px;'
+      +'background:#1b6499;color:#fff;padding:10px 12px;font:600 12.5px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;'
+      +'box-shadow:0 6px 20px rgba(12,39,64,.35);');
+    b.innerHTML='<span style="flex:1">Install this app for offline data collection</span>'
+      +'<button id="pwaInstall" style="background:#c8991a;color:#fff;border:none;padding:8px 16px;border-radius:20px;font:700 12px/1 inherit;cursor:pointer">Install</button>'
+      +'<button id="pwaClose" aria-label="Dismiss" style="background:transparent;color:#fff;border:none;font-size:18px;line-height:1;cursor:pointer;padding:4px 6px">&times;</button>';
+    document.body.appendChild(b);
+    document.getElementById('pwaInstall').onclick=function(){ window.installApp(); };
+    document.getElementById('pwaClose').onclick=function(){ try{ localStorage.setItem(DISMISS_KEY,'1'); }catch(e){} hideBanner(); };
+  }
+  function hideBanner(){ var b=document.getElementById('pwaBanner'); if(b) b.remove(); }
+
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred=e; showBanner(); });
+  window.addEventListener('appinstalled', function(){
+    deferred=null; hideBanner(); window.__isStandalone=true;
+    try{ localStorage.setItem(DISMISS_KEY,'1'); }catch(e){}
+    if(window.toast) toast('App installed. You can open it from your home screen.');
+  });
+})();
 </script>
 </body>
 </html>
