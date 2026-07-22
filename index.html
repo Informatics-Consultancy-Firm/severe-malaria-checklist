@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -145,6 +145,23 @@
   .cons-sheet ul{margin:0 0 8px 15px;}
   .cons-sheet li{font:400 11.5px/1.5 var(--body);color:var(--ink);margin-bottom:3px;}
 
+  /* follow-up day cards */
+  .fu-grid{display:flex;flex-direction:column;gap:8px;}
+  .fu-card{border:1.5px solid var(--line);border-radius:12px;background:var(--white);overflow:hidden;transition:.13s;}
+  .fu-head{display:flex;align-items:center;gap:11px;padding:13px 14px;cursor:pointer;font:600 14px/1.2 var(--body);color:var(--ink);}
+  .fu-card .fu-n{width:26px;height:26px;border-radius:8px;background:var(--sky-50);border:1.5px solid var(--sky-200);color:var(--sky-700);display:grid;place-items:center;font:700 11px var(--body);flex:0 0 auto;}
+  .fu-card .fu-badge{margin-left:auto;font:700 8.5px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:99px;background:var(--sky-100);color:var(--sky-700);}
+  .fu-card.done{border-color:var(--ok);}
+  .fu-card.done .fu-n{background:var(--ok);border-color:var(--ok);color:#fff;}
+  .fu-card.done .fu-badge{background:var(--ok-bg);color:var(--ok);}
+  .fu-card.open{border-color:var(--sky-500);box-shadow:0 0 0 3px rgba(61,154,214,.12);}
+  .fu-card.locked{opacity:.6;background:#f6f9fc;}
+  .fu-card.locked .fu-head{cursor:not-allowed;}
+  .fu-card.locked .fu-n{background:#eef2f5;border-color:var(--line);color:var(--muted);}
+  .fu-card.locked .fu-badge{background:#eef2f5;color:var(--muted);}
+  .fu-body{padding:0 14px 13px;border-top:1px solid var(--line);}
+  .fu-body .sub-lbl:first-child{margin-top:11px;}
+
   .dec{display:flex;align-items:flex-start;gap:11px;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--white);cursor:pointer;font:500 12.8px/1.45 var(--body);color:var(--ink);transition:.13s;}
   .dec:hover{border-color:var(--sky-300);}
   .dec .bx{width:20px;height:20px;border-radius:6px;border:2px solid var(--sky-200);flex:0 0 auto;display:grid;place-items:center;margin-top:1px;}
@@ -194,7 +211,10 @@
   .flag.bad{background:var(--bad-bg);color:var(--bad);border:1px solid #f2ccd2;}
   .flag.ok{background:var(--ok-bg);color:var(--ok);border:1px solid #bfe6d6;}
 
+  .ver{text-align:center;font:500 10px/1.4 var(--body);color:var(--muted);margin-top:12px;letter-spacing:.02em;}
+
   /* review + done */
+  .rv-count{font:500 11px/1.5 var(--body);color:var(--sky-700);background:var(--sky-50);border:1px dashed var(--sky-300);border-radius:10px;padding:9px 11px;margin-bottom:12px;}
   .rv{padding:18px 16px 26px;}
   .rv-head{background:linear-gradient(160deg,var(--sky-500),var(--sky-700));color:#fff;border-radius:16px;padding:16px;margin-bottom:14px;}
   .rv-head .id{font:700 20px var(--disp);letter-spacing:.05em;}
@@ -359,6 +379,10 @@ const Store=(()=>{let ok=false,mem={};try{localStorage.setItem('__t','1');localS
         set(k,v){if(ok){try{localStorage.setItem(k,JSON.stringify(v));return;}catch(e){}}mem[k]=v;},
         del(k){if(ok){try{localStorage.removeItem(k);return;}catch(e){}}delete mem[k];}};})();
 const REC_KEY='sm_records_v1', URL_KEY='sm_gas_url_v1', ME_KEY='sm_interviewer_v1', DRAFT_KEY='sm_draft_v1';
+const UPD_KEY='sm_last_update_v1';
+/* Bump this whenever a new build is put on the server. It is what the Update
+   button reports, so a fieldworker can read it back to you over the phone. */
+const APP_VERSION='2026.07.22';
 let records=Store.get(REC_KEY,[]);
 GAS_URL=Store.get(URL_KEY,GAS_URL)||GAS_URL;
 let interviewer=Store.get(ME_KEY,'');
@@ -395,6 +419,44 @@ const WHO_SIGNS=['Severe anaemia','Convulsions','Prostration','Coma','Respirator
 const WELLBEING=['Fever','Convulsion','Lethargy'];
 /* older records stored a single string here, newer ones an array */
 const wellArr=v=>Array.isArray(v)?v:(v?[v]:[]);
+const fuVal=(a,d,f)=>a['E28_d'+d+'_'+f];
+/* a follow-up day is DONE only when all three answers are in */
+function fuDayDone(a,d){
+  return wellArr(fuVal(a,d,'well')).length>0
+      && String(fuVal(a,d,'pd')??'').trim()!==''
+      && String(fuVal(a,d,'hb')??'').trim()!=='';
+}
+/* anything at all entered for that day */
+function fuDayStarted(a,d){
+  return wellArr(fuVal(a,d,'well')).length>0
+      || String(fuVal(a,d,'pd')??'').trim()!==''
+      || String(fuVal(a,d,'hb')??'').trim()!=='';
+}
+/* days run in order: Day 1 is always open, Day n waits for Day n-1 */
+function fuUnlocked(a,d){ return d===1 || fuDayDone(a,d-1); }
+/* Day 1 must be complete, and no half-finished day may be left behind */
+function fuComplete(a){
+  if(!fuDayDone(a,1)) return false;
+  for(let d=2;d<=5;d++){ if(fuDayStarted(a,d)&&!fuDayDone(a,d)) return false; }
+  return true;
+}
+let fuOpenDay=0;   /* which day card is expanded */
+function fuOpen(d){
+  if(!fuUnlocked(ans,d)){ toast('Finish Day '+(d-1)+' first'); return; }
+  fuOpenDay = (fuOpenDay===d ? 0 : d);
+  saveDraft(); renderPage();
+}
+/* keep the card badges honest while a day is being typed into, without
+   re-rendering the page and stealing focus from the input */
+function refreshFuCards(){
+  for(let d=1;d<=5;d++){
+    const el=document.getElementById('fu_'+d); if(!el) continue;
+    const done=fuDayDone(ans,d), unl=fuUnlocked(ans,d), open=(fuOpenDay===d);
+    el.className='fu-card'+(done?' done':'')+(unl?'':' locked')+(open?' open':'');
+    const b=el.querySelector('.fu-badge');
+    if(b) b.textContent = done?'Complete' : !unl?'Locked' : open?'Open':'Start';
+  }
+}
 
 /* =========================================================
    INSTRUMENTS
@@ -618,10 +680,14 @@ const CRF=[
   {id:'F31',n:31,sec:'F · Outcome', type:'number', q:'Total length of stay', unit:'days', min:0, when:a=>isCase(a)},
 
   /* SECTION G — FOLLOW-UP  (cases only, and it comes AFTER the outcome) */
-  {id:'E28',n:32,sec:'G · Follow-up', type:'progress',
+  {id:'E28fu',n:32,sec:'G · Follow-up', type:'choice', options:['Yes','No'], yn:true,
+     q:'Was there a follow-up visit for this child?',
+     help:'If no follow-up was done, answer No and the daily cards are skipped.',
+     when:a=>isCase(a)},
+  {id:'E28',n:33,sec:'G · Follow-up', type:'progress',
      q:'Daily follow-up, Days 1 to 5',
-     help:'General wellbeing, parasite density and haemoglobin for each day. Leave later days blank if no follow-up was done that day.',
-     optional:true, when:a=>isCase(a)}
+     help:'Open a day and fill all three answers. Day 1 must be finished before Day 2 opens, and so on. Stop whenever the follow-up ended.',
+     when:a=>isCase(a)&&a.E28fu==='Yes'}
 ];
 
 /* ---------- Instrument 2: Caregiver Questionnaire ---------- */
@@ -643,9 +709,9 @@ const CGQ=[
   {id:'G7a',n:7, sec:'B · Household / socio-economic', type:'autofill', q:'District',
      help:'Set automatically from the hospital.', from:a=>hospDistrict(a.hospital)},
   {id:'G7b',n:7, sec:'B · Household / socio-economic', type:'text',   q:'Community', ph:'Community',
-     help:"Filled from this child's own form. Change it if the caregiver reports differently."},
+     help:'Prefilled from this child\u2019s form \u2014 edit if it differs.'},
   {id:'G7c',n:7, sec:'B · Household / socio-economic', type:'choice', q:'Residence type', options:['Urban','Urban slums','Peri-Urban','Rural'],
-     help:"Filled from this child's own form. Change it if the caregiver reports differently."},
+     help:'Prefilled from this child\u2019s form \u2014 edit if it differs.'},
   {id:'G8', n:8, sec:'B · Household / socio-economic', type:'multi',  q:'Household assets',
      help:'Tick all that apply.', options:['Radio','Television','Bicycle','Motorcycle','Car','Electricity','Mobile phone'], none:'None of these'},
   {id:'G9a',n:9, sec:'B · Household / socio-economic', type:'choice', q:'Roof material', options:['Thatch','Iron sheet','Concrete']},
@@ -654,7 +720,7 @@ const CGQ=[
 
   /* C — care-seeking */
   {id:'G10',n:10,sec:'C · Care-seeking behaviour', type:'date',   q:'When did the child first develop fever or symptoms?',
-     help:"Filled from the date of fever onset on this child's own form. Change it if the caregiver reports differently."},
+     help:'Prefilled from the date of fever onset on this child\u2019s form \u2014 edit if it differs.'},
   {id:'G11',n:11,sec:'C · Care-seeking behaviour', type:'choice', q:'What was the first action taken?',
      options:['No action','Home treatment','Traditional remedy','Drug shop / pharmacy','CHW','PHU / Health centre','Hospital']},
   {id:'G12',n:12,sec:'C · Care-seeking behaviour', type:'choice', q:'First source of care sought',
@@ -671,6 +737,11 @@ const CGQ=[
      help:'Tick all that apply. Antimalarial = Inj. artemether/artesunate, oral ACT, or rectal artesunate.',
      options:['Antimalarial','Antibiotic','Herbal / traditional treatment','Antipyretic'],
      other:true, none:'None'},
+  /* only asked when Antimalarial was ticked above — one of the four forms */
+  {id:'G16a',    sec:'C · Care-seeking behaviour', type:'choice', q:'Which antimalarial was given?',
+     help:'Select the one the child received before reaching the hospital.',
+     options:['Inj. artemether','Inj. artesunate','Oral ACT','Rectal artesunate'],
+     when:a=>Array.isArray(a.G16)&&a.G16.indexOf('Antimalarial')>-1},
   {id:'G17',n:17,sec:'C · Care-seeking behaviour', type:'choice', q:'Mode of transport to hospital',
      options:['Walking','Bike','Motorbike','Car','Ambulance'], other:true},
   {id:'G18',n:18,sec:'C · Care-seeking behaviour', type:'choice', q:'Estimated travel time to hospital',
@@ -712,7 +783,9 @@ const CGQ_FULL=[CGQ[0]].concat(CG_NAME).concat(CGQ.slice(1));
 
 const ALL=CONSENT
   .concat([F_CHILD_FIRST,F_CHILD_MIDDLE,F_CHILD_LAST,F_ENROLDATE,F_ENROLTIME,F_INTERVIEWER])
-  .concat(ENROL_META).concat(CRF).concat(CG_NAME).concat(CGQ);
+  .concat(ENROL_META).concat(CRF).concat(CGQ_FULL);   /* CGQ_FULL keeps the caregiver
+     name fields in the same place the form puts them, so the review reads in
+     exactly the order the questions were asked */
 const byId=id=>ALL.find(q=>q.id===id);
 /* join name parts into a single display name */
 function fullName(first,middle,last){ return [first,middle,last].map(s=>String(s||'').trim()).filter(Boolean).join(' '); }
@@ -831,7 +904,8 @@ function isOptional(q,a){ a=a||ans; return typeof q.optional==='function' ? !!q.
 /* `qc` is the wording to use when the record is a control */
 function qText(q,a){ a=a||ans; return (q.qc && isControl(a)) ? q.qc : q.q; }
 function answered(q){
-  if(isOptional(q)||q.type==='auto'||q.type==='agecalc'||q.type==='agegroup'||q.type==='note'||q.type==='progress') return true;
+  if(q.type==='progress') return fuComplete(ans);
+  if(isOptional(q)||q.type==='auto'||q.type==='agecalc'||q.type==='agegroup'||q.type==='note') return true;
   if(q.type==='autofill') return !!String(q.from(ans)||'').trim();
   const v=ans[q.id];
   if(q.type==='multi'){
@@ -923,8 +997,9 @@ function renderHome(){
         <span class="tx"><h3>Dashboard</h3><span>${GAS_URL?'Live summary from Google Sheets':'Not connected — tap to set up'}</span></span>
         <span class="arrow">${I.arrow}</span></button>
       <div style="height:6px"></div>
-      <button class="btn btn-ghost btn-block btn-sm" onclick="setGAS()">${GAS_URL?'Google Sheet connected · change':'Connect Google Sheet'}</button>
+      <button class="btn btn-ghost btn-block btn-sm" onclick="checkForUpdate()">↻ Update</button>
       ${((window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true)?'':`<button class="btn btn-primary btn-block btn-sm" style="margin-top:8px" onclick="installApp&&installApp()">⤓ Install app on this device</button>`}
+      <div class="ver">Version ${esc(APP_VERSION)}${esc(lastUpdatedText())}${GAS_URL?' · Google Sheet connected':''}</div>
     </div></div>`;
 }
 /* Persistent, honest status of the outbox. */
@@ -1150,7 +1225,7 @@ function startForm(setNo,kind){
         CNdate:todayISO(), CNtime:nowHM() };
   if(kind!=='case'){ ans.matchCase=setNo; ans.ctrlSlot=kind; }
   ans.studyId=genStudyId(ans);
-  PAGES=pages(); pg=0; lastVis='';
+  PAGES=pages(); pg=0; lastVis=''; fuOpenDay=0;
   if(kind!=='case'){
     const caseRec=recById('Case '+setNo);
     ans._reqGroup = caseRec ? (caseRec.A2b || ageGroupOf(caseRec.A1)) : '';   /* control must match case age group */
@@ -1204,19 +1279,28 @@ function ctl(q){
     return h;
   }
   if(q.type==='progress'){
-    let h='';
+    let h='<div class="fu-grid">';
     for(let d=1;d<=5;d++){
-      const k='E28_d'+d+'_well';
-      const arr=wellArr(ans[k]);
-      h+=`<div class="sub-lbl">Day ${d} · general wellbeing</div>
-        <div class="chips" style="margin-bottom:8px">${WELLBEING.map(o=>
-          `<div class="chip ${arr.indexOf(o)>-1?'sel':''}" data-pw="${k}" data-v="${esc(o)}"><span class="bx">${I.tick}</span><span>${esc(o)}</span></div>`).join('')}</div>
-        <div class="grid2" style="margin-bottom:10px">
-          <div class="field"><input type="number" placeholder="Parasite density" data-k="E28_d${d}_pd" value="${esc(ans['E28_d'+d+'_pd']||'')}"></div>
-          <div class="field"><input type="number" step="0.1" placeholder="Hb (g/dL)" data-k="E28_d${d}_hb" value="${esc(ans['E28_d'+d+'_hb']||'')}"></div>
-        </div>`;
+      const done=fuDayDone(ans,d), unl=fuUnlocked(ans,d), open=(fuOpenDay===d)&&unl;
+      const badge = done?'Complete' : !unl?'Locked' : open?'Open':'Start';
+      const k='E28_d'+d+'_well', arr=wellArr(ans[k]);
+      h+=`<div class="fu-card${done?' done':''}${unl?'':' locked'}${open?' open':''}" id="fu_${d}">
+        <div class="fu-head" onclick="fuOpen(${d})">
+          <span class="fu-n">${done?I.tick:d}</span><span>Day ${d}</span>
+          <span class="fu-badge">${badge}</span>
+        </div>
+        ${open?`<div class="fu-body">
+          <div class="sub-lbl">General wellbeing<span class="req">*</span></div>
+          <div class="chips" style="margin-bottom:10px">${WELLBEING.map(o=>
+            `<div class="chip ${arr.indexOf(o)>-1?'sel':''}" data-pw="${k}" data-v="${esc(o)}"><span class="bx">${I.tick}</span><span>${esc(o)}</span></div>`).join('')}</div>
+          <div class="sub-lbl">Parasite density (/µL)<span class="req">*</span></div>
+          <div class="field" style="margin-bottom:10px"><input type="number" min="0" placeholder="Parasite density" data-k="E28_d${d}_pd" value="${esc(ans['E28_d'+d+'_pd']||'')}"></div>
+          <div class="sub-lbl">Haemoglobin (g/dL)<span class="req">*</span></div>
+          <div class="field"><input type="number" step="0.1" min="0" placeholder="Hb (g/dL)" data-k="E28_d${d}_hb" value="${esc(ans['E28_d'+d+'_hb']||'')}"></div>
+        </div>`:''}
+      </div>`;
     }
-    return h;
+    return h+'</div>';
   }
   if(q.type==='autofill'){
     const val=q.from(ans)||'';
@@ -1256,7 +1340,7 @@ function ctl(q){
 function qCard(q){
   if(q.type==='note'&&q.html) return `<div class="q-card" id="qc_${q.id}">${q.html}</div>`;
   const num=q.n?`<span class="q-no">Q${q.n}</span>`:'';
-  const req=(isOptional(q)||q.type==='auto'||q.type==='note'||q.type==='progress')?'':'<span class="req">*</span>';
+  const req=(isOptional(q)||q.type==='auto'||q.type==='note')?'':'<span class="req">*</span>';
   return `<div class="q-card" id="qc_${q.id}">
     ${num}
     <div class="q-txt">${esc(qText(q))}${req}</div>
@@ -1378,6 +1462,7 @@ function afterChange(qid){
     saveDraft(); renderPage(); return;
   }
   if(qid==='interviewer'){ interviewer=ans.interviewer; Store.set(ME_KEY,interviewer); }
+  if(String(qid).indexOf('E28_d')===0) refreshFuCards();
   mirrorChildToCaregiver();
   /* a change may open or close later questions -> re-render this page */
   const dependents=PAGES[pg].items.some(q=>q.when);
@@ -1429,6 +1514,20 @@ function runFlags(){
     const v=parseFloat(ans[f.id]);
     el.innerHTML=(!isNaN(v)&&f.test(v))?`<div class="flag ${f.cls}">${esc(f.msg)}</div>`:'';
   });
+  /* follow-up: say plainly what is still missing */
+  const fu=document.getElementById('fl_E28');
+  if(fu){
+    if(!fuDayDone(ans,1)){
+      fu.innerHTML=`<div class="flag warn">Open Day 1 and fill all three answers to record the follow-up.</div>`;
+    }else{
+      let half=0; for(let d=2;d<=5;d++) if(fuDayStarted(ans,d)&&!fuDayDone(ans,d)) half=d;
+      const n=[1,2,3,4,5].filter(d=>fuDayDone(ans,d)).length;
+      fu.innerHTML = half
+        ? `<div class="flag warn">Day ${half} is started but not finished — complete all three answers or clear it.</div>`
+        : `<div class="flag ok">${n} follow-up day${n===1?'':'s'} recorded.</div>`;
+    }
+  }
+
   /* a case should have at least one WHO sign (advisory only) */
   const el=document.getElementById('fl_C16');
   if(el&&isCase(ans)){
@@ -1493,7 +1592,7 @@ function renderConsentDeclined(qid){
     </div></div></div>`;
 }
 /* wipe the in-progress entry so nothing leaks into the next child */
-function resetEntry(){ discardDraft(); ans={}; pg=0; lastVis=''; PAGES=pages(); }
+function resetEntry(){ discardDraft(); ans={}; pg=0; lastVis=''; fuOpenDay=0; PAGES=pages(); }
 /* child older than 59 months -> not eligible; enrolment ends without saving */
 function renderIneligible(){
   const n=ans.setNo?parseInt(ans.setNo,10):null;
@@ -1531,13 +1630,41 @@ function fmt(q){
   if(q.other&&v==='Other'&&ans[q.id+'_other']) return 'Other — '+ans[q.id+'_other'];
   return String(v);
 }
-function renderReview(){
-  let body='',cur='';
+/* Follow-up is five days x three answers, so it is written out day by day
+   instead of being summarised as "D1, D2 recorded". */
+function fuFullRows(a){
+  const days=fuDays(a);
+  if(!days.length) return `<div class="rv-item"><span class="q">Daily follow-up</span><span class="a empty">—</span></div>`;
+  let h='';
+  days.forEach(d=>{
+    const well=wellArr(a['E28_d'+d+'_well']).join(', ');
+    h+=`<div class="rv-item"><span class="q">Day ${d} · general wellbeing</span><span class="a ${well?'':'empty'}">${esc(well||'—')}</span></div>`
+     + `<div class="rv-item"><span class="q">Day ${d} · parasite density (/µL)</span><span class="a ${a['E28_d'+d+'_pd']?'':'empty'}">${esc(a['E28_d'+d+'_pd']||'—')}</span></div>`
+     + `<div class="rv-item"><span class="q">Day ${d} · haemoglobin (g/dL)</span><span class="a ${a['E28_d'+d+'_hb']?'':'empty'}">${esc(a['E28_d'+d+'_hb']||'—')}</span></div>`;
+  });
+  return h;
+}
+/* Every question that applies to this record, in form order, with its answer.
+   `ans` must already be pointing at the record being shown. */
+function fullSheet(opts){
+  opts=opts||{};
+  let body='',cur='',asked=0,blank=0;
   ALL.filter(q=>visible(q)&&q.type!=='note'&&q.type!=='auto').forEach(q=>{
     if(q.sec!==cur){cur=q.sec;body+=`<div class="rv-sec">${esc(cur)}</div>`;}
+    if(q.type==='progress'){
+      body+=`<div class="rv-item"><span class="q">${esc(qText(q))}</span><span class="a">${esc(fmt(q))}</span></div>`+fuFullRows(ans);
+      asked++; if(!fuDays(ans).length) blank++;
+      return;
+    }
     const val=fmt(q), miss=(val==='—'&&!isOptional(q));
-    body+=`<div class="rv-item"><span class="q">${esc(qText(q))}</span><span class="a ${miss?'empty':''}">${esc(val)}</span></div>`;
+    asked++; if(val==='—') blank++;
+    body+=`<div class="rv-item"><span class="q">${esc(qText(q))}</span><span class="a ${opts.flag&&miss?'empty':(val==='—'?'empty':'')}">${esc(val)}</span></div>`;
   });
+  return {body,asked,blank};
+}
+function renderReview(){
+  const sheet=fullSheet({flag:true});
+  const body=sheet.body;
   const nm=fullName(ans.childFirst,ans.childMiddle,ans.childLast);
   app.innerHTML=`<div class="appbar">
       <button class="ico-btn" onclick="backFromReview()">${I.back}</button>
@@ -1547,6 +1674,7 @@ function renderReview(){
     <div class="body"><div class="rv">
       <div class="rv-head"><div class="id">${esc(ans.studyId||'—')}</div>
         <div class="meta">${nm?esc(nm)+'<br>':''}${esc(ans.hospital||'')} · ${esc(ans.enrolDate||'')} ${esc(ans.enrolTime||'')}<br>${esc(ans.interviewer||'')}</div></div>
+      <div class="rv-count">Every question asked for this record — ${sheet.asked} in total${sheet.blank?`, ${sheet.blank} left blank`:', all answered'}. Read through before submitting.</div>
       ${body}
     </div></div>
     <div class="footer"><button class="btn btn-primary btn-block" onclick="submitRec()">${GAS_URL?'Submit to Google Sheets':'Save enrolment'}</button></div>`;
@@ -1554,6 +1682,9 @@ function renderReview(){
 function backFromReview(){ pg=PAGES.length-1; renderPage(); }
 
 function submitRec(){
+  /* last safety net: drop any answer whose question is currently skipped, so a
+     value entered and then skipped past can never reach the record */
+  clearHidden();
   ans.childName = fullName(ans.childFirst,ans.childMiddle,ans.childLast);
   ans.cgName    = fullName(ans.cgFirst,ans.cgMiddle,ans.cgLast);
   const dup=findDuplicate(ans);
@@ -1611,6 +1742,59 @@ function send(rec,cb){
 }
 
 function pending(){ return records.filter(r=>!r._synced); }
+
+/* ---------- pulling a new build from the server ----------
+   Saved records, the outbox and any unfinished draft all live in localStorage,
+   which an update never touches. The order below matters: the server is proved
+   reachable BEFORE any cache is cleared, so a failed check can never leave the
+   app with nothing to load from. */
+async function checkForUpdate(){
+  if(!navigator.onLine){
+    toast('No internet. Connect first, then update.'); return;
+  }
+  const q=pending().length;
+  if(!confirm('Update this app to the latest version from the server?\n\n'
+    +'Nothing on this device is lost — your '+records.length+' saved record'+(records.length===1?'':'s')
+    +(q?', the '+q+' still waiting to sync,':'')+' and any unfinished draft all stay.\n\n'
+    +'The app will reload.')) return;
+
+  if(ans&&ans.studyId) saveDraft();     /* never lose a form that is open */
+  toast('Updating…');
+
+  let fresh;
+  try{
+    const res=await fetch('./index.html?u='+Date.now(),{cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    fresh=await res.text();
+    if(!fresh||fresh.length<1000) throw new Error('empty response');
+  }catch(e){
+    toast('Could not reach the server. The app was not updated.'); return;
+  }
+
+  /* only now is it safe to throw the old copy away */
+  try{
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.update().catch(()=>{})));
+    }
+    if(window.caches){
+      const keys=await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+  }catch(e){ /* cache clearing is best effort — the reload below still works */ }
+
+  Store.set(UPD_KEY,new Date().toISOString());
+  toast('Updated. Reloading…');
+  setTimeout(()=>{
+    location.replace(location.href.split('#')[0].split('?')[0]+'?u='+Date.now());
+  },600);
+}
+function lastUpdatedText(){
+  const t=Store.get(UPD_KEY,'');
+  if(!t) return '';
+  const d=new Date(t); if(isNaN(d)) return '';
+  return ' · updated '+d.toISOString().slice(0,10)+' '+d.toTimeString().slice(0,5);
+}
 
 let syncing=false;
 /* Push the queue one record at a time (Apps Script serialises writes anyway,
@@ -1805,11 +1989,7 @@ function renderRec(){
   const r=records[detail]; if(!r){renderList();return;}
   const c=String(r._group)==='Case';
   const save=ans; ans=r;    /* reuse visibility + fmt against this record */
-  let body='',cur='';
-  ALL.filter(q=>visible(q)&&q.type!=='note'&&q.type!=='auto').forEach(q=>{
-    if(q.sec!==cur){cur=q.sec;body+=`<div class="rv-sec">${esc(cur)}</div>`;}
-    body+=`<div class="rv-item"><span class="q">${esc(qText(q))}</span><span class="a">${esc(fmt(q))}</span></div>`;
-  });
+  const sheet=fullSheet(); const body=sheet.body;
   ans=save;
   const pill = `<span class="tag-pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span>`;
   const sub = esc(r.childName||'')+(r.cgName?' · caregiver: '+esc(r.cgName):'');
@@ -1819,6 +1999,7 @@ function renderRec(){
     <div class="body"><div class="rv">
       <div class="rv-head"><div class="id">${esc(r._id)}</div>
         <div class="meta">${sub?sub+'<br>':''}${esc(r.hospital||'')} · ${esc(r.enrolDate||'')} ${esc(r.enrolTime||'')}<br>${esc(r.interviewer||'')}${c?'<br>'+esc(fuLabel(r)):''}</div></div>
+      <div class="rv-count">Every question asked for this record — ${sheet.asked} in total.</div>
       ${body}
       ${c?`<button class="btn btn-ghost btn-block btn-sm" style="margin-top:12px" onclick="openFollowUp()">Follow-up status by case</button>`:''}
     </div></div>`;
