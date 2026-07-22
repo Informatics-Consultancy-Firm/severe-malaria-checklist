@@ -128,6 +128,31 @@
 
   .skip-note{font:400 11.5px/1.45 var(--body);color:var(--sky-700);background:var(--sky-50);border:1px dashed var(--sky-300);border-radius:10px;padding:9px 11px;}
 
+  /* consent */
+  .inst-banner.i0{background:linear-gradient(160deg,#2aa17c,#15705a);}
+  .cons-sheet{background:var(--sky-50);border:1px solid var(--sky-200);border-radius:13px;padding:13px 14px;}
+  .cons-sheet h5{font:600 13px/1.3 var(--disp);letter-spacing:.02em;color:var(--sky-700);margin-bottom:7px;}
+  .cons-sheet p{font:400 11.8px/1.5 var(--body);color:var(--ink);margin-bottom:8px;}
+  .cons-sheet p:last-child{margin-bottom:0;}
+  .cons-sheet b{font-weight:600;}
+  .cons-sheet .kv{font:400 11.5px/1.55 var(--body);color:var(--muted);margin-bottom:8px;}
+  .cons-sheet details{margin-top:4px;}
+  .cons-sheet summary{font:600 11.5px/1 var(--body);color:var(--sky-600);cursor:pointer;padding:7px 0;list-style:none;}
+  .cons-sheet summary::-webkit-details-marker{display:none;}
+  .cons-sheet summary::after{content:" ▾";}
+  .cons-sheet details[open] summary::after{content:" ▴";}
+  .cons-sheet .sec{font:600 11.5px/1.3 var(--body);color:var(--ink);margin:10px 0 4px;}
+  .cons-sheet ul{margin:0 0 8px 15px;}
+  .cons-sheet li{font:400 11.5px/1.5 var(--body);color:var(--ink);margin-bottom:3px;}
+
+  .dec{display:flex;align-items:flex-start;gap:11px;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--white);cursor:pointer;font:500 12.8px/1.45 var(--body);color:var(--ink);transition:.13s;}
+  .dec:hover{border-color:var(--sky-300);}
+  .dec .bx{width:20px;height:20px;border-radius:6px;border:2px solid var(--sky-200);flex:0 0 auto;display:grid;place-items:center;margin-top:1px;}
+  .dec .bx svg{opacity:0;transform:scale(.5);transition:.15s;}
+  .dec.on{border-color:var(--ok);background:var(--ok-bg);box-shadow:0 0 0 3px rgba(42,161,124,.12);}
+  .dec.on .bx{background:var(--ok);border-color:var(--ok);}
+  .dec.on .bx svg{opacity:1;transform:scale(1);}
+
   .opts{display:flex;flex-direction:column;gap:8px;}
   .opt{display:flex;align-items:center;gap:11px;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--white);cursor:pointer;font:500 14px/1.3 var(--body);color:var(--ink);transition:.13s;}
   .opt:hover{border-color:var(--sky-300);}
@@ -277,6 +302,8 @@
   .set-card.current{border-color:var(--sky-500);box-shadow:0 0 0 3px rgba(61,154,214,.14),var(--sh-sm);}
   .set-card.current .sc-badge{background:var(--sky-100);color:var(--sky-700);}
   .set-card.complete .sc-badge{background:var(--ok-bg);color:var(--ok);}
+  .set-card.open{border-color:var(--warn);}
+  .set-card.open .sc-badge{background:var(--warn-bg);color:#8a6d00;}
   .set-card.locked{cursor:not-allowed;opacity:.62;background:#f6f9fc;}
   .set-card.locked .sc-badge{background:#eef2f5;color:var(--muted);}
   .set-card.locked .sc-no{color:var(--muted);}
@@ -364,6 +391,10 @@ function setRange(h){
   return [1,TOTAL_SETS];
 }
 const WHO_SIGNS=['Severe anaemia','Convulsions','Prostration','Coma','Respiratory distress','Hypoglycaemia','Shock','Jaundice','Haemoglobinuria'];
+/* daily follow-up wellbeing — tick every one present that day */
+const WELLBEING=['Fever','Convulsion','Lethargy'];
+/* older records stored a single string here, newer ones an array */
+const wellArr=v=>Array.isArray(v)?v:(v?[v]:[]);
 
 /* =========================================================
    INSTRUMENTS
@@ -404,6 +435,88 @@ const ENROL_META=[
   {id:'ctrlSlot',  sec:'Enrolment', type:'choice', q:'Control slot', options:['a','b'], when:a=>isControl(a)}
 ];
 
+/* ---------- Consent — taken BEFORE any case or control form is started ----------
+   Mirrors the printed Participant Consent Form (parent / legal guardian of a
+   child participant) and the Participant Information Sheet. Nothing is signed on
+   the device: agreement is recorded as ticked Yes/No answers plus confirmation
+   boxes. Items 1 to 5 must ALL be Yes — a No on any of them ends the enrolment
+   and nothing is saved. Consent is taken separately for every child, so it is
+   never copied from a case to its controls. */
+const CONS_SEC='Consent · Parent or legal guardian';
+const CONSENT_SHEET=`<div class="cons-sheet">
+  <h5>Participant information sheet</h5>
+  <p><b>Factors and Determinants of Severe Malaria Among Children Under Five in Selected Hospitals in Sierra Leone</b></p>
+  <div class="kv">Lead researcher (MPhil student): Abdul Mac Falama<br>
+    Lead supervisor: Dr Harriet Affran Bonful · Co-supervisor: Dr Basil Kaburi<br>
+    Funder: GFELTP, University of Ghana / USG President's Malaria Initiative</div>
+  <p>Read this to the parent or legal guardian in a language they understand before asking the questions below.</p>
+  <details>
+    <summary>Open the full information sheet</summary>
+    <div class="sec">What the study is about</div>
+    <p>The study looks for the factors linked to severe malaria in children under five. In 2024 Sierra Leone recorded 22,688 severe malaria cases with a case fatality rate of 5.9%. Findings go to the Ministry of Health and the National Malaria Control Programme.</p>
+    <div class="sec">Why this child</div>
+    <p>The child is attending this hospital and is between 1 and 59 months old. Children with severe malaria (cases) and children with uncomplicated malaria at OPD (controls) are both enrolled, and the two groups are compared.</p>
+    <div class="sec">What taking part involves</div>
+    <ul>
+      <li>Questions on the child's health history, household, malaria prevention, and when care was first sought.</li>
+      <li>Review of the child's clinical file, laboratory results and treatment records.</li>
+      <li>About 20 to 30 minutes.</li>
+      <li>No extra blood tests or procedures. All clinical care is decided by the hospital team, not the research team.</li>
+    </ul>
+    <div class="sec">Taking part is voluntary</div>
+    <p>The guardian may refuse or withdraw at any time, without giving a reason. Care for the child is not affected either way.</p>
+    <div class="sec">Confidentiality</div>
+    <p>No names appear in any report. Each child gets a study ID; personal details are stored separately, access is limited to authorised team members, and data are kept securely for at least five years then destroyed.</p>
+    <div class="sec">Benefits and risks</div>
+    <p>There is no direct payment or material benefit. Risks are minimal — answering questions only, and any question may be declined.</p>
+    <div class="sec">Contacts</div>
+    <p>Research lead: Abdul Mac Falama · Abdulmac14@yahoo.com · +232 75 482676<br>
+      Sierra Leone Ethics and Scientific Review Committee, DPPI, Ministry of Health, Youyi Building, Freetown · efoday@mohs.gov.sl · +232 78 366 493</p>
+  </details>
+</div>`;
+
+const CONSENT=[
+  {id:'CNsheet', sec:CONS_SEC, type:'note', q:'Information sheet', html:CONSENT_SHEET},
+
+  {id:'CN1', n:1, sec:CONS_SEC, type:'choice', options:['Yes','No'], yn:true,
+     q:'I confirm that I have read and understood the participant information sheet for the above study. I have had the opportunity to consider the information, ask questions, and have had these questions answered satisfactorily.'},
+  {id:'CN2', n:2, sec:CONS_SEC, type:'choice', options:['Yes','No'], yn:true,
+     q:"I understand that my child's participation in this study is voluntary and that I am free to withdraw consent at any time, without giving any reason, and without any penalty or effect on my child's clinical care."},
+  {id:'CN3', n:3, sec:CONS_SEC, type:'choice', options:['Yes','No'], yn:true,
+     q:'I understand that data collected during this study may be reviewed by members of the research team in Sierra Leone and Ghana. I give permission for these individuals to have access to the study data relating to my child.'},
+  {id:'CN4', n:4, sec:CONS_SEC, type:'choice', options:['Yes','No'], yn:true,
+     q:'I hereby declare that I have not been subjected to any form of coercion or undue inducement in giving this consent.'},
+  {id:'CN5', n:5, sec:CONS_SEC, type:'choice', options:['Yes','No'], yn:true,
+     q:'I agree for my child to take part in this study.'},
+  {id:'CN6', n:6, sec:CONS_SEC, type:'choice', options:['Yes','No'], yn:true,
+     q:'I give permission for the research team to take notes during the interview and to review relevant clinical records of my child.'},
+  {id:'CN7', n:7, sec:CONS_SEC, type:'choice', options:['Yes','No'], yn:true,
+     q:'I am happy for information provided to be made available to researchers after the MPhil project has been completed, and I understand this information will not contain any details that could identify my child or me.'},
+
+  {id:'CNname', sec:CONS_SEC, type:'text',   q:'Name of parent / legal guardian giving consent', ph:'Full name'},
+  {id:'CNrel',  sec:CONS_SEC, type:'choice', q:'Relationship to child',
+     options:['Mother','Father','Grandparent','Aunty'], other:true},
+  {id:'CNdate', sec:CONS_SEC, type:'date',   q:'Date consent taken'},
+  {id:'CNtime', sec:CONS_SEC, type:'time',   q:'Time consent taken'},
+
+  {id:'CNlit',  sec:CONS_SEC, type:'choice', options:['Yes','No'], yn:true,
+     q:'Is the parent / legal guardian unable to read?',
+     help:'If yes, a literate witness must be present and confirm the consent.'},
+  {id:'CNwit',    sec:CONS_SEC, type:'text', q:'Name of literate witness', ph:'Full name', when:a=>a.CNlit==='Yes'},
+  {id:'CNwitRel', sec:CONS_SEC, type:'text', q:'Relationship of witness to guardian', ph:'e.g. Neighbour', when:a=>a.CNlit==='Yes'},
+  {id:'CNwitOk',  sec:CONS_SEC, type:'check', q:'Witness confirmation', when:a=>a.CNlit==='Yes',
+     decl:'The witness confirms the information sheet and consent form were accurately explained to the parent or guardian in a language they understand, and that consent was given freely.'},
+
+  {id:'CNres', sec:CONS_SEC, type:'check', q:'Researcher declaration',
+     decl:'I have read or given the participant information sheet to the parent or guardian and provided a copy to keep, they were given the opportunity to ask questions and all questions were answered, and consent was given freely and voluntarily without coercion.'},
+  {id:'CNok',  sec:CONS_SEC, type:'check', q:'Consent confirmed',
+     decl:'I confirm consent was obtained from the parent or legal guardian exactly as recorded above. No signature or thumbprint is captured on this device — tick to confirm.'}
+];
+/* items 1 to 5 are the blocking ones */
+const CONSENT_REQ=['CN1','CN2','CN3','CN4','CN5'];
+function consentDeclined(a){ return CONSENT_REQ.some(id=>a[id]==='No'); }
+function consentGiven(a){ return CONSENT_REQ.every(id=>a[id]==='Yes') && !!a.CNok; }
+
 /* ---------- Instrument 1: Prospective Structured Case Report Form ----------
    Follows the printed CRF exactly: same items, same order, same response
    options, and the form's own numbering (which restarts at 9 in Section C
@@ -432,7 +545,9 @@ const CRF=[
   {id:'B7', n:7, sec:'B · History of present illness', type:'multi',  q:'Other symptoms before admission',
      help:'Tick all that apply.',
      options:['Headache','Vomiting','Convulsions','Difficulty breathing','Poor feeding','Lethargy','Unconsciousness','Diarrhoea'], other:true},
-  {id:'B8', n:8, sec:'B · History of present illness', type:'number', q:'Days ill before admission', unit:'days', min:0},
+  {id:'B8', n:8, sec:'B · History of present illness', type:'number', q:'Days ill before admission',
+     qc:'Days ill before visiting the facility',   /* controls are seen at OPD, not admitted */
+     unit:'days', min:0},
   {id:'B9v',n:9, sec:'B · History of present illness', type:'multi',  q:'History of malaria vaccine, doses received',
      help:'Tick each dose received.', options:['Dose 1','Dose 2','Dose 3','Dose 4'], none:'None received', optional:true},
   {id:'B9vVer', sec:'B · History of present illness', type:'choice', q:'Malaria vaccine history verified?',
@@ -447,11 +562,14 @@ const CRF=[
   {id:'C10',n:10,sec:'C · Admission assessment', type:'number', q:'Height / length', unit:'cm', min:0, dec:true},
   {id:'C11',n:11,sec:'C · Admission assessment', type:'number', q:'MUAC', unit:'cm', min:0, dec:true},
   {id:'C12',n:12,sec:'C · Admission assessment', type:'number', q:'Temperature', unit:'°C', min:0, dec:true},
-  {id:'C13',n:13,sec:'C · Admission assessment', type:'number', q:'Respiratory rate', unit:'breaths/min', min:0},
-  {id:'C14',n:14,sec:'C · Admission assessment', type:'number', q:'Heart rate', unit:'beats/min', min:0},
+  {id:'C13',n:13,sec:'C · Admission assessment', type:'number', q:'Respiratory rate', unit:'breaths/min', min:0,
+     optional:a=>isControl(a)},
+  {id:'C14',n:14,sec:'C · Admission assessment', type:'number', q:'Heart rate', unit:'beats/min', min:0,
+     optional:a=>isControl(a)},
   {id:'C15',n:15,sec:'C · Admission assessment', type:'number', q:'Oxygen saturation', unit:'%', min:0, max:100},
   {id:'C16',n:16,sec:'C · Admission assessment', type:'multi',  q:'Severe malaria signs present',
-     help:'Tick all that apply.', options:WHO_SIGNS, other:true, none:'None present'},
+     help:'Tick all that apply.', options:WHO_SIGNS, other:true, none:'None present',
+     when:a=>isCase(a)},   /* severity signs are a case question only */
 
   /* SECTION D — LABORATORY FINDINGS
      Gate: which diagnostic test was used. RDT-only records skip every
@@ -461,9 +579,13 @@ const CRF=[
      q:'Which malaria diagnostic test was performed?',
      help:'Only the questions for the test(s) used will be asked.',
      options:['RDT only','Microscopy only','Both RDT and microscopy']},
-  {id:'D17',n:17,sec:'D · Laboratory findings', type:'choice', q:'RDT result', options:['Positive','Negative'],
+  /* Inclusion requires a positive parasitological test, so Positive is the only
+     answer a recorded child can have — a negative test means no enrolment. */
+  {id:'D17',n:17,sec:'D · Laboratory findings', type:'choice', q:'RDT result', options:['Positive'],
+     help:'Only positive children are enrolled.',
      when:a=>a.Dtest==='RDT only'||a.Dtest==='Both RDT and microscopy'},
-  {id:'D18',n:18,sec:'D · Laboratory findings', type:'choice', q:'Microscopy result', options:['Positive','Negative'],
+  {id:'D18',n:18,sec:'D · Laboratory findings', type:'choice', q:'Microscopy result', options:['Positive'],
+     help:'Only positive children are enrolled.',
      when:a=>a.Dtest==='Microscopy only'||a.Dtest==='Both RDT and microscopy'},
   {id:'D19',n:19,sec:'D · Laboratory findings', type:'number', q:'Parasite density', unit:'/µL', min:0,
      help:'From microscopy.',
@@ -490,15 +612,16 @@ const CRF=[
   {id:'E27',n:27,sec:'E · Treatment and monitoring', type:'multi',  q:'Supportive treatment given',
      help:'Tick all that apply.',
      options:['Blood transfusion','IV fluids','Antibiotics','Anticonvulsants','Oxygen','Glucose','Antipyretics'], other:true},
-  {id:'E28',n:28,sec:'E · Treatment and monitoring', type:'progress',
-     q:'Daily progress notes, Days 1 to 5',
-     help:'General wellbeing, parasite density and haemoglobin for each day. Leave later days blank if not applicable.',
-     optional:true, when:a=>isCase(a)},
-
   /* SECTION F — OUTCOME  (cases only; controls end at Q27) */
   {id:'F29',n:29,sec:'F · Outcome', type:'choice', q:'Outcome', options:['Recovered','Died','Referred','Absconded'], when:a=>isCase(a)},
   {id:'F30',n:30,sec:'F · Outcome', type:'date',   q:'Date of outcome', when:a=>isCase(a)},
-  {id:'F31',n:31,sec:'F · Outcome', type:'number', q:'Total length of stay', unit:'days', min:0, when:a=>isCase(a)}
+  {id:'F31',n:31,sec:'F · Outcome', type:'number', q:'Total length of stay', unit:'days', min:0, when:a=>isCase(a)},
+
+  /* SECTION G — FOLLOW-UP  (cases only, and it comes AFTER the outcome) */
+  {id:'E28',n:32,sec:'G · Follow-up', type:'progress',
+     q:'Daily follow-up, Days 1 to 5',
+     help:'General wellbeing, parasite density and haemoglobin for each day. Leave later days blank if no follow-up was done that day.',
+     optional:true, when:a=>isCase(a)}
 ];
 
 /* ---------- Instrument 2: Caregiver Questionnaire ---------- */
@@ -519,8 +642,10 @@ const CGQ=[
   {id:'G6', n:6, sec:'B · Household / socio-economic', type:'number', q:'Number of children under five', unit:'children', min:0, max:15},
   {id:'G7a',n:7, sec:'B · Household / socio-economic', type:'autofill', q:'District',
      help:'Set automatically from the hospital.', from:a=>hospDistrict(a.hospital)},
-  {id:'G7b',n:7, sec:'B · Household / socio-economic', type:'text',   q:'Community', ph:'Community'},
-  {id:'G7c',n:7, sec:'B · Household / socio-economic', type:'choice', q:'Residence type', options:['Urban','Urban slums','Peri-Urban','Rural']},
+  {id:'G7b',n:7, sec:'B · Household / socio-economic', type:'text',   q:'Community', ph:'Community',
+     help:"Filled from this child's own form. Change it if the caregiver reports differently."},
+  {id:'G7c',n:7, sec:'B · Household / socio-economic', type:'choice', q:'Residence type', options:['Urban','Urban slums','Peri-Urban','Rural'],
+     help:"Filled from this child's own form. Change it if the caregiver reports differently."},
   {id:'G8', n:8, sec:'B · Household / socio-economic', type:'multi',  q:'Household assets',
      help:'Tick all that apply.', options:['Radio','Television','Bicycle','Motorcycle','Car','Electricity','Mobile phone'], none:'None of these'},
   {id:'G9a',n:9, sec:'B · Household / socio-economic', type:'choice', q:'Roof material', options:['Thatch','Iron sheet','Concrete']},
@@ -528,7 +653,8 @@ const CGQ=[
   {id:'G9c',n:9, sec:'B · Household / socio-economic', type:'choice', q:'Floor material', options:['Earth','Wooden','Cement','Tile']},
 
   /* C — care-seeking */
-  {id:'G10',n:10,sec:'C · Care-seeking behaviour', type:'date',   q:'When did the child first develop fever or symptoms?'},
+  {id:'G10',n:10,sec:'C · Care-seeking behaviour', type:'date',   q:'When did the child first develop fever or symptoms?',
+     help:"Filled from the date of fever onset on this child's own form. Change it if the caregiver reports differently."},
   {id:'G11',n:11,sec:'C · Care-seeking behaviour', type:'choice', q:'What was the first action taken?',
      options:['No action','Home treatment','Traditional remedy','Drug shop / pharmacy','CHW','PHU / Health centre','Hospital']},
   {id:'G12',n:12,sec:'C · Care-seeking behaviour', type:'choice', q:'First source of care sought',
@@ -549,14 +675,14 @@ const CGQ=[
      options:['Walking','Bike','Motorbike','Car','Ambulance'], other:true},
   {id:'G18',n:18,sec:'C · Care-seeking behaviour', type:'choice', q:'Estimated travel time to hospital',
      options:['Less than 30 min','30 to 60 min','1 to 2 hrs','More than 2 hrs']},
-  {id:'G19',n:19,sec:'C · Care-seeking behaviour', type:'number', q:'Estimated distance to hospital', unit:'km', min:0, max:500, dec:true},
 
   /* D — prevention */
   {id:'G20',n:20,sec:'D · Malaria prevention practices', type:'choice', q:'Does the household own a bed net?', options:['Yes','No'], yn:true},
   {id:'G21',n:21,sec:'D · Malaria prevention practices', type:'choice', q:'Did the child sleep under a bed net the previous night?',
      options:['Yes','No'], yn:true, when:a=>a.G20==='Yes'},
-  {id:'G22',n:22,sec:'D · Malaria prevention practices', type:'choice', q:'Source of net',
-     options:['ANC','EPI','Mass campaign','School-based distribution (SBD)','Purchase'], when:a=>a.G20==='Yes'},
+  {id:'G22',n:22,sec:'D · Malaria prevention practices', type:'multi', q:'Source of net',
+     help:'Tick every source the household got a net from.',
+     options:['ANC','EPI','Mass campaign','School-based distribution (SBD)','Purchase'], other:true, when:a=>a.G20==='Yes'},
   {id:'G23',n:23,sec:'D · Malaria prevention practices', type:'choice', q:'When was the net obtained?',
      options:['Less than 1 year ago','1 to 2 years ago','More than 2 years ago',"Don't know"], when:a=>a.G20==='Yes'},
   {id:'G24',n:24,sec:'D · Malaria prevention practices', type:'choice', q:'Has the household received indoor residual spraying in the past 12 months?',
@@ -584,7 +710,8 @@ const CGQ=[
 /* caregiver questionnaire with the name fields leading the caregiver-info page */
 const CGQ_FULL=[CGQ[0]].concat(CG_NAME).concat(CGQ.slice(1));
 
-const ALL=[F_CHILD_FIRST,F_CHILD_MIDDLE,F_CHILD_LAST,F_ENROLDATE,F_ENROLTIME,F_INTERVIEWER]
+const ALL=CONSENT
+  .concat([F_CHILD_FIRST,F_CHILD_MIDDLE,F_CHILD_LAST,F_ENROLDATE,F_ENROLTIME,F_INTERVIEWER])
   .concat(ENROL_META).concat(CRF).concat(CG_NAME).concat(CGQ);
 const byId=id=>ALL.find(q=>q.id===id);
 /* join name parts into a single display name */
@@ -620,12 +747,17 @@ function ageGroupOf(dob){
   if(m<=23) return '12 to 23 months';
   return '24 to 59 months';
 }
-function isCase(a){ return String(a.group||'').indexOf('Case')===0; }
-function isControl(a){ return String(a.group||'').indexOf('Control')===0; }
+/* `group` is the full label on a live form; saved records and rows fetched from
+   the sheet also carry the short `_group`, so accept either. */
+function isCase(a){ return String(a.group||a._group||'').indexOf('Case')===0; }
+function isControl(a){ return String(a.group||a._group||'').indexOf('Control')===0; }
 
 /* ---- one combined form: enrolment head, then CRF, then caregiver section ---- */
 function pages(){
-  const p=[{key:'screen', title:'Enrolment & child', items:HEAD}];
+  /* consent is always the first section — no case or control form can be
+     started until the guardian's answers have been recorded */
+  const p=[{key:'consent', title:'Consent', items:CONSENT, inst:'C'},
+           {key:'screen',  title:'Enrolment & child', items:HEAD}];
   const push=(list,inst)=>{
     let cur=null;
     list.forEach(q=>{
@@ -672,7 +804,7 @@ function hospCode(name){const h=HOSPITALS.find(x=>x.name===name);return h?h.code
                             device when offline; the server de-duplicates too)
      Control -> "Control Na" / "Control Nb"  (N = the matched case number the
                             fieldworker enters, slot = a or b)
-   The caregiver of each child shares the number: see caregiverId(). */
+   The caregiver is part of the child's own record and shares its study ID. */
 function genStudyId(a){
   if(!a.group) return '';
   if(isCase(a)){
@@ -694,8 +826,12 @@ function formId(a){ return genStudyId(a); }
 
 /* ---------- visibility + validation ---------- */
 function visible(q){ return !q.when || q.when(ans); }
+/* `optional` may be a flat true/false or a rule, e.g. optional only for controls */
+function isOptional(q,a){ a=a||ans; return typeof q.optional==='function' ? !!q.optional(a) : !!q.optional; }
+/* `qc` is the wording to use when the record is a control */
+function qText(q,a){ a=a||ans; return (q.qc && isControl(a)) ? q.qc : q.q; }
 function answered(q){
-  if(q.optional||q.type==='auto'||q.type==='agecalc'||q.type==='agegroup'||q.type==='note'||q.type==='progress') return true;
+  if(isOptional(q)||q.type==='auto'||q.type==='agecalc'||q.type==='agegroup'||q.type==='note'||q.type==='progress') return true;
   if(q.type==='autofill') return !!String(q.from(ans)||'').trim();
   const v=ans[q.id];
   if(q.type==='multi'){
@@ -850,15 +986,26 @@ function setState(n){
   const filled=(caseDone?1:0)+(aDone?1:0)+(bDone?1:0);
   return {caseDone,aDone,bDone,filled,complete:caseDone&&aDone&&bDone};
 }
-/* first not-complete set WITHIN a facility's block — the only one you may start
-   there. Locking is per-facility, so the four sites progress independently. */
+/* first not-complete set WITHIN a facility's block. Locking is per-facility, so
+   the four sites progress independently. */
 function currentSetIn(h){ const [s,e]=setRange(h); for(let n=s;n<=e;n++){ if(!setState(n).complete) return n; } return e+1; }
 function currentSet(){ return curHosp?currentSetIn(curHosp):1; }
-function setUnlocked(n){ const h=hospForSet(n); return n<=currentSetIn(h) || setState(n).complete; }
+/* The CASE is what moves a facility forward: as soon as a set's case is
+   recorded, the next set's case opens. Its two controls stay open behind it
+   for as long as needed, so a fieldworker can run all the cases first and come
+   back for the controls later. */
+function caseFrontierIn(h){ const [s,e]=setRange(h); for(let n=s;n<=e;n++){ if(!setState(n).caseDone) return n; } return e+1; }
+function setUnlocked(n){ const h=hospForSet(n); return n<=caseFrontierIn(h); }
+/* next set in the SAME facility whose case is still to be done */
+function nextCaseAfter(n){
+  const h=hospForSet(n), [s,e]=setRange(h);
+  for(let k=n+1;k<=e;k++){ if(!setState(k).caseDone) return k; }
+  return null;
+}
 function hospProgress(h){
   const [s,e]=setRange(h); let complete=0,cases=0,ctrls=0;
   for(let n=s;n<=e;n++){ const st=setState(n); if(st.complete)complete++; if(st.caseDone)cases++; ctrls+=(st.aDone?1:0)+(st.bDone?1:0); }
-  return {complete,cases,ctrls,cur:currentSetIn(h)};
+  return {complete,cases,ctrls,cur:currentSetIn(h),nextCase:caseFrontierIn(h)};
 }
 
 /* Step 1 — choose the facility. Step 2 — that facility's own set list. */
@@ -874,7 +1021,7 @@ function renderFacilities(){
     cards+=`<button class="action-card" onclick="openSets('${h.code}')">
       <span class="ic ${doneAll?'g':'b'}">${doneAll?I.tick2:I.clip}</span>
       <span class="tx"><h3>${esc(h.name)}</h3>
-        <span>Sets ${s}–${e} · ${p.complete}/${h.cases} sets complete${doneAll?' ✓':''}</span>
+        <span>Sets ${s}–${e} · ${p.cases}/${h.cases} cases · ${p.ctrls}/${h.controls} controls${doneAll?' ✓':''}</span>
         <div class="qtrack" style="margin-top:8px"><div class="qfill case" style="width:${pct}%"></div></div>
       </span>
       <span class="arrow">${I.arrow}</span></button>`;
@@ -894,15 +1041,18 @@ function openSets(code){
 }
 function renderSets(){
   if(!curHosp){ renderFacilities(); return; }
-  const h=curHosp, [s,e]=setRange(h), cur=currentSetIn(h), done=cur-s;
+  const h=curHosp, [s,e]=setRange(h), cur=caseFrontierIn(h);
   const hd=`<div class="appbar"><button class="ico-btn" onclick="renderFacilities()">${I.back}</button>
     <div class="titles"><div class="eyebrow">${esc(h.code)} · sets in order</div><div class="title">${esc(h.name)}</div></div>
     <button class="ico-btn" onclick="openSets()">${I.refresh}</button></div>`;
   const card=n=>{
-    const st=setState(n), isCur=(n===cur);
-    const cls=st.complete?'complete':isCur?'current':setUnlocked(n)?'':'locked';
-    const badge=st.complete?'Complete':isCur?'Current':setUnlocked(n)?'Open':'Locked';
-    const nextK = isCur ? (!st.caseDone?'case':!st.aDone?'a':!st.bDone?'b':'') : '';
+    const st=setState(n), isNext=(n===cur);
+    const cls = st.complete?'complete' : st.caseDone?'open' : isNext?'current' : 'locked';
+    const badge = st.complete ? 'Complete'
+                : st.caseDone ? ((st.aDone||st.bDone)?'1 control left':'Controls due')
+                : isNext      ? 'Next case'
+                              : 'Locked';
+    const nextK = st.complete ? '' : !st.caseDone ? (isNext?'case':'') : !st.aDone?'a':'b';
     return `<button class="set-card ${cls}" onclick="tapSet(${n})">
       <div class="sc-top"><span class="sc-no">Set ${n}</span><span class="sc-badge">${badge}</span></div>
       <div class="dots">
@@ -914,9 +1064,12 @@ function renderSets(){
     </button>`;
   };
   let cards=''; for(let n=s;n<=e;n++) cards+=card(n);
-  const noteHtml = cur>e
+  const p=hospProgress(h);
+  const noteHtml = p.complete>=h.cases
     ? `All ${h.cases} sets complete for ${esc(h.name)} — ${h.cases} cases and ${h.cases*2} controls.`
-    : `${done} of ${h.cases} sets complete. Open <b>Set ${cur}</b> to continue — case first, then the two controls. Later sets stay locked until this one is finished.`;
+    : cur>e
+      ? `All ${h.cases} cases recorded. ${p.ctrls} of ${h.cases*2} controls done — open any set marked <b>Controls due</b> to finish it.`
+      : `${p.cases} of ${h.cases} cases · ${p.ctrls} of ${h.cases*2} controls. <b>Set ${cur}</b> is the next case. Once a case is saved the next case opens straight away, so you can run the cases first and come back to any set marked <b>Controls due</b> later.`;
   app.innerHTML=hd+`<div class="body"><div class="list">
     <div class="set-sec"><span class="hn">Sets ${s}–${e}</span><span class="rg">${esc(h.district)}</span></div>
     <div class="sets-note">${noteHtml}</div>
@@ -924,7 +1077,7 @@ function renderSets(){
   </div></div>`;
 }
 function tapSet(n){
-  if(!setUnlocked(n)){ toast('Finish Set '+currentSetIn(hospForSet(n))+' first'); return; }
+  if(!setUnlocked(n)){ toast('Record the case for Set '+caseFrontierIn(hospForSet(n))+' first'); return; }
   renderSet(n);
 }
 function renderSet(n){
@@ -938,7 +1091,7 @@ function renderSet(n){
     const locked=!isC && !st.caseDone;                 /* controls wait for the case */
     const icon=done?I.tick2:(isC?'CA':'C'+kind);
     const iCls=locked?'lock':(isC?'case':'ctrl');
-    const sub=done?(name?esc(name)+' · recorded':'recorded'):(locked?'complete the case first':'child + caregiver in one form');
+    const sub=done?(name?esc(name)+' · recorded':'recorded'):(locked?'complete the case first':'consent, then child + caregiver');
     const status=done?`<span class="stt done">Done</span>`
                : locked?`<span class="stt wait">Case first</span>`
                : `<span class="stt go">Start</span>`;
@@ -953,7 +1106,7 @@ function renderSet(n){
     <img class="bar-logo" src="${LOGO}" alt="ICF-SL"></div>`;
   app.innerHTML=hd+`<div class="body"><div class="list">
     <div class="set-head"><div class="id">Set ${n}${st.complete?' · complete':''}</div>
-      <div class="meta">${esc(h.name)} · ${esc(h.district)}<br>One case and two matched controls. Each form covers the child (CRF) and its caregiver in one go. The case must be recorded before the controls open.</div></div>
+      <div class="meta">${esc(h.name)} · ${esc(h.district)}<br>One case and two matched controls. Each form covers the child (CRF) and its caregiver in one go. The case must be recorded before this set's controls open — the controls can be done later.</div></div>
     ${slot('case','Case '+n)}
     ${slot('a','Control '+n+'a')}
     ${slot('b','Control '+n+'b')}
@@ -965,38 +1118,42 @@ function viewById(id){
   if(i>-1){ detail=i; renderRec(); return; }
   toast(id+' is recorded (on another device / the sheet)');
 }
-/* Context carried from a set's CASE into its CONTROLS as editable prefills, so
-   shared "where/how they live" details aren't retyped. Never carries the child's
-   identity/DOB/sex/clinical data or the caregiver's own details. */
-const CARRY_FIELDS=['A4b','A4c','G1','G2','G3','G4','G5','G6','G7b','G7c','G8','G9a','G9b','G9c','G20','G22','G23','G24','G28','G29','G30','G31'];
-function copyFields(src,fields){
-  if(!src) return false;
-  const clone=v=>Array.isArray(v)?v.slice():v; let any=false;
-  fields.forEach(fid=>{
-    if(src[fid]!==undefined&&src[fid]!==null&&src[fid]!==''){ ans[fid]=clone(src[fid]); any=true; }
-    const ot=fid+'_other'; if(src[ot]!==undefined&&src[ot]!=='') ans[ot]=src[ot];
+/* NOTHING is prefilled from a set's case into its controls. A control is a
+   different child in a different household, often interviewed days later, so
+   every caregiver, household and environmental answer is asked fresh. The only
+   thing a control inherits from its case is the age group it must match.
+
+   WITHIN one record it is the opposite: the caregiver section belongs to that
+   same child, so anything already answered on the child's own form flows
+   straight into it. Case -> that case's caregiver, control -> that control's
+   caregiver, never across the two. Prefill only: every mirrored answer stays
+   fully editable, and once it has been touched it is left alone. */
+const MIRROR={ G7b:'A4b', G7c:'A4c', G10:'B6' };
+function mirrorChildToCaregiver(){
+  Object.keys(MIRROR).forEach(t=>{
+    const v=ans[MIRROR[t]];
+    if(v===undefined||v===null||String(v).trim()==='') return;
+    if(ans[t]===undefined||String(ans[t]).trim()==='') ans[t]=v;
   });
-  return any;
 }
 function recById(id){ return records.find(r=>String(r._id)===id) || (Array.isArray(dashData)&&dashData.find(r=>String(r._id)===id)); }
 
 function startForm(setNo,kind){
   curHosp=hospForSet(setNo);
-  if(!setUnlocked(setNo)){ toast('Finish Set '+currentSetIn(curHosp)+' first'); return; }
+  if(!setUnlocked(setNo)){ toast('Record the case for Set '+caseFrontierIn(curHosp)+' first'); return; }
   if(kind!=='case' && !setState(setNo).caseDone){ toast('Do the case first'); return; }
   const id=childIdOf(setNo,kind);
   if(recDone(id)){ viewById(id); return; }
   ans={ interviewer:interviewer||'', setNo:setNo,
         group: kind==='case'?'Case (severe malaria, admitted)':'Control (uncomplicated, OPD)',
-        hospital:hospForSet(setNo).name, enrolDate:todayISO(), enrolTime:nowHM(), G0:todayISO() };
+        hospital:hospForSet(setNo).name, enrolDate:todayISO(), enrolTime:nowHM(), G0:todayISO(),
+        CNdate:todayISO(), CNtime:nowHM() };
   if(kind!=='case'){ ans.matchCase=setNo; ans.ctrlSlot=kind; }
   ans.studyId=genStudyId(ans);
   PAGES=pages(); pg=0; lastVis='';
   if(kind!=='case'){
     const caseRec=recById('Case '+setNo);
     ans._reqGroup = caseRec ? (caseRec.A2b || ageGroupOf(caseRec.A1)) : '';   /* control must match case age group */
-    if(copyFields(recById('Case '+setNo),CARRY_FIELDS))
-      setTimeout(()=>toast('Shared details copied from Case '+setNo+' — edit any that differ'),300);
   }
   saveDraft(); renderPage();
 }
@@ -1016,7 +1173,10 @@ function discardDraft(){ Store.del(DRAFT_KEY); }
 
 function ctl(q){
   const v=ans[q.id];
-  if(q.type==='note') return `<div class="skip-note">${esc(q.help||'')}</div>`;
+  if(q.type==='note') return q.html ? q.html : `<div class="skip-note">${esc(q.help||'')}</div>`;
+  if(q.type==='check'){
+    return `<div class="dec ${v?'on':''}" data-dq="${q.id}"><span class="bx">${I.tick}</span><span>${esc(q.decl||'')}</span></div>`;
+  }
 
   if(q.type==='auto'){
     const val=formId(ans); ans.studyId=val;
@@ -1046,11 +1206,11 @@ function ctl(q){
   if(q.type==='progress'){
     let h='';
     for(let d=1;d<=5;d++){
-      h+=`<div class="sub-lbl">Day ${d}</div>
-        <div class="field" style="margin-bottom:6px"><select data-k="E28_d${d}_well">
-          <option value="">General wellbeing</option>
-          ${['Fever','Convulsion','Lethargy'].map(o=>`<option ${ans['E28_d'+d+'_well']===o?'selected':''}>${esc(o)}</option>`).join('')}
-        </select></div>
+      const k='E28_d'+d+'_well';
+      const arr=wellArr(ans[k]);
+      h+=`<div class="sub-lbl">Day ${d} · general wellbeing</div>
+        <div class="chips" style="margin-bottom:8px">${WELLBEING.map(o=>
+          `<div class="chip ${arr.indexOf(o)>-1?'sel':''}" data-pw="${k}" data-v="${esc(o)}"><span class="bx">${I.tick}</span><span>${esc(o)}</span></div>`).join('')}</div>
         <div class="grid2" style="margin-bottom:10px">
           <div class="field"><input type="number" placeholder="Parasite density" data-k="E28_d${d}_pd" value="${esc(ans['E28_d'+d+'_pd']||'')}"></div>
           <div class="field"><input type="number" step="0.1" placeholder="Hb (g/dL)" data-k="E28_d${d}_hb" value="${esc(ans['E28_d'+d+'_hb']||'')}"></div>
@@ -1094,11 +1254,12 @@ function ctl(q){
     : `<div class="field">${inp}</div>`;
 }
 function qCard(q){
+  if(q.type==='note'&&q.html) return `<div class="q-card" id="qc_${q.id}">${q.html}</div>`;
   const num=q.n?`<span class="q-no">Q${q.n}</span>`:'';
-  const req=(q.optional||q.type==='auto'||q.type==='note'||q.type==='progress')?'':'<span class="req">*</span>';
+  const req=(isOptional(q)||q.type==='auto'||q.type==='note'||q.type==='progress')?'':'<span class="req">*</span>';
   return `<div class="q-card" id="qc_${q.id}">
     ${num}
-    <div class="q-txt">${esc(q.q)}${req}</div>
+    <div class="q-txt">${esc(qText(q))}${req}</div>
     ${q.help&&q.type!=='note'?`<div class="q-help">${esc(q.help)}</div>`:''}
     ${ctl(q)}
     <div id="fl_${q.id}"></div>
@@ -1109,10 +1270,12 @@ function renderPage(){
   const total=PAGES.length, pct=Math.round(pg/total*100);
   const grp=ans.group?(isCase(ans)?'<span class="tag-pill case">CASE</span>':'<span class="tag-pill ctrl">CONTROL</span>'):'';
   const childRef = (ans.childName?esc(ans.childName)+' ':'')+'('+esc(ans.studyId||'')+')';
-  const banner = P.inst===1
+  const banner = P.key==='consent'
+    ? `<div class="inst-banner i0"><div class="n">Step 1 · Consent</div><h2>Participant consent</h2><p>Read the information sheet to the parent or legal guardian, then record their answers. No form is started until consent is confirmed.</p></div>`
+    : P.inst===1
     ? `<div class="inst-banner i1"><div class="n">Instrument 1 · CRF</div><h2>Case Report Form</h2><p>Clinical form for the child, completed by the clinician from examination and the medical record.</p></div>`
     : P.inst===2
-      ? `<div class="inst-banner i2"><div class="n">Instrument 2 · same form</div><h2>Caregiver Questionnaire</h2><p>Caregiver section for <b>${childRef}</b> — part of the same record.</p></div>`
+      ? `<div class="inst-banner i2"><div class="n">Instrument 2 · same form</div><h2>Caregiver Questionnaire</h2><p>Caregiver of <b>${childRef}</b> — same record, same household. Answers already given on this child's form are carried in.</p></div>`
       : `<div class="inst-banner i1"><div class="n">Step 1</div><h2>Enrolment &amp; child</h2><p>Record the child's name and details, then the clinical form and caregiver section.</p></div>`;
   const showBanner = pg===0 || PAGES[pg-1].inst!==P.inst;
 
@@ -1132,12 +1295,12 @@ function renderPage(){
     </div></div>
     <div class="footer">
       ${pg>0?`<button class="btn btn-ghost" onclick="prevPage()">Back</button>`:''}
-      <button class="btn btn-primary" onclick="nextPage()">${pg===PAGES.length-1?'Review':'Next'}</button>
+      <button class="btn btn-primary" onclick="nextPage()">${P.key==='consent'?'Confirm consent &amp; continue':(pg===PAGES.length-1?'Review':'Next')}</button>
     </div>`;
   applyDefaults();
   wire(); runFlags();
 }
-function applyDefaults(){ prefillDistricts(); }
+function applyDefaults(){ prefillDistricts(); mirrorChildToCaregiver(); }
 function wire(){
   const b=document.getElementById('fb'); if(!b) return;
   b.addEventListener('click',e=>{
@@ -1149,6 +1312,22 @@ function wire(){
       o.classList.add('sel');
       const ob=document.getElementById('ob_'+qid); if(ob) ob.style.display=(val==='Other')?'':'none';
       afterChange(qid); return;
+    }
+    const d=e.target.closest('.dec');
+    if(d){
+      const qid=d.dataset.dq;
+      if(ans[qid]){ delete ans[qid]; d.classList.remove('on'); }
+      else { ans[qid]='Confirmed'; d.classList.add('on'); }
+      afterChange(qid); return;
+    }
+    const pw=e.target.closest('.chip[data-pw]');
+    if(pw){
+      const k=pw.dataset.pw, val=pw.dataset.v;
+      let arr=wellArr(ans[k]).slice();
+      arr = arr.indexOf(val)>-1 ? arr.filter(x=>x!==val) : arr.concat([val]);
+      ans[k]=arr;
+      document.querySelectorAll(`.chip[data-pw="${k}"]`).forEach(x=>x.classList.toggle('sel',arr.indexOf(x.dataset.v)>-1));
+      afterChange(k); return;
     }
     const c=e.target.closest('.chip');
     if(c){
@@ -1179,6 +1358,9 @@ function wire(){
 function afterChange(qid){
   const card=document.getElementById('qc_'+String(qid).split('_')[0]);
   if(card) card.classList.remove('missing');
+  /* a No on any of consent items 1 to 5 ends it there and then — the rest of
+     the consent page is not asked and the form is never started */
+  if(CONSENT_REQ.indexOf(qid)>-1 && ans[qid]==='No'){ renderConsentDeclined(qid); return; }
   const a=document.getElementById('autoId');
   if(a){ ans.studyId=formId(ans); a.value=ans.studyId||idPlaceholder(ans); }
   prefillDistricts();
@@ -1196,6 +1378,7 @@ function afterChange(qid){
     saveDraft(); renderPage(); return;
   }
   if(qid==='interviewer'){ interviewer=ans.interviewer; Store.set(ME_KEY,interviewer); }
+  mirrorChildToCaregiver();
   /* a change may open or close later questions -> re-render this page */
   const dependents=PAGES[pg].items.some(q=>q.when);
   saveDraft();
@@ -1246,13 +1429,6 @@ function runFlags(){
     const v=parseFloat(ans[f.id]);
     el.innerHTML=(!isNaN(v)&&f.test(v))?`<div class="flag ${f.cls}">${esc(f.msg)}</div>`:'';
   });
-  /* Inclusion requires a POSITIVE parasitological test (RDT or microscopy). */
-  ['D17','D18'].forEach(id=>{
-    const el=document.getElementById('fl_'+id); if(!el) return;
-    el.innerHTML=(ans[id]==='Negative')
-      ? `<div class="flag warn">A negative result. Inclusion requires a positive malaria test (RDT or microscopy).</div>` : '';
-  });
-
   /* a case should have at least one WHO sign (advisory only) */
   const el=document.getElementById('fl_C16');
   if(el&&isCase(ans)){
@@ -1273,8 +1449,9 @@ function nextPage(){
     toast(miss.length+' unanswered question'+(miss.length>1?'s':''));
     return;
   }
+  if(PAGES[pg].key==='consent' && consentDeclined(ans)){ renderConsentDeclined(); return; }
   if(!eligible(ans)){ renderIneligible(); return; }
-  if(pg===0 && !ans.studyId){ toast(isControl(ans)?'Enter the matched case number and control slot':'Select the study group'); return; }
+  if(PAGES[pg].key==='screen' && !ans.studyId){ toast(isControl(ans)?'Enter the matched case number and control slot':'Select the study group'); return; }
   let np=pg+1;
   while(np<=PAGES.length-1 && !pageItems(np).length) np++;   /* skip empty sections (e.g. outcome for controls) */
   if(np>PAGES.length-1){ renderReview(); return; }
@@ -1295,6 +1472,28 @@ function renderDuplicate(dup){
       <button class="btn btn-ghost btn-block" onclick="discardDraft();renderHome()">Back to home</button>
     </div></div></div>`;
 }
+/* consent refused on any of items 1 to 5 -> stop immediately, thank the
+   guardian, exclude the child (nothing is saved) and reset for a new entry.
+   The slot stays open so the next child can be screened in its place. */
+function renderConsentDeclined(qid){
+  const n=ans.setNo?parseInt(ans.setNo,10):null;
+  const kind=isControl(ans)?String(ans.ctrlSlot||'a'):'case';
+  const item=qid?qid.slice(2):CONSENT_REQ.filter(id=>ans[id]==='No').map(id=>id.slice(2))[0];
+  resetEntry();                                   /* nothing kept, nothing saved */
+  app.innerHTML=`<div class="body"><div class="done">
+    <div class="circle" style="background:var(--ok-bg);color:var(--ok)">${I.check}</div>
+    <h2>Thank you</h2>
+    <div class="idbig">Not enrolled</div>
+    <p>Consent was not given${item?' (No on statement '+esc(item)+')':''}, so this child is excluded and no data has been recorded. Thank the parent or guardian for their time and let them know their child's care continues exactly as normal.</p>
+    <div class="skip-note" style="text-align:left;margin:14px 0 4px">The slot is still open — start a new entry when the next child is screened.</div>
+    <div class="actions">
+      ${n!=null?`<button class="btn btn-primary btn-block" onclick="startForm(${n},'${kind}')">Start a new entry</button>`:''}
+      ${n!=null?`<button class="btn btn-ghost btn-block" onclick="renderSet(${n})">Back to Set ${n}</button>`:''}
+      <button class="btn btn-ghost btn-block" onclick="renderHome()">Back to home</button>
+    </div></div></div>`;
+}
+/* wipe the in-progress entry so nothing leaks into the next child */
+function resetEntry(){ discardDraft(); ans={}; pg=0; lastVis=''; PAGES=pages(); }
 /* child older than 59 months -> not eligible; enrolment ends without saving */
 function renderIneligible(){
   const n=ans.setNo?parseInt(ans.setNo,10):null;
@@ -1321,9 +1520,8 @@ function prevPage(){
 function fmt(q){
   let v=ans[q.id];
   if(q.type==='progress'){
-    const days=[];
-    for(let d=1;d<=5;d++){ if(ans['E28_d'+d+'_well']||ans['E28_d'+d+'_pd']||ans['E28_d'+d+'_hb']) days.push('D'+d); }
-    return days.length?days.join(', ')+' recorded':'—';
+    const days=fuDays(ans);
+    return days.length?'D'+days.join(', D')+' recorded':'—';
   }
   if(Array.isArray(v)){
     if(!v.length) return '—';
@@ -1337,8 +1535,8 @@ function renderReview(){
   let body='',cur='';
   ALL.filter(q=>visible(q)&&q.type!=='note'&&q.type!=='auto').forEach(q=>{
     if(q.sec!==cur){cur=q.sec;body+=`<div class="rv-sec">${esc(cur)}</div>`;}
-    const val=fmt(q), miss=(val==='—'&&!q.optional);
-    body+=`<div class="rv-item"><span class="q">${esc(q.q)}</span><span class="a ${miss?'empty':''}">${esc(val)}</span></div>`;
+    const val=fmt(q), miss=(val==='—'&&!isOptional(q));
+    body+=`<div class="rv-item"><span class="q">${esc(qText(q))}</span><span class="a ${miss?'empty':''}">${esc(val)}</span></div>`;
   });
   const nm=fullName(ans.childFirst,ans.childMiddle,ans.childLast);
   app.innerHTML=`<div class="appbar">
@@ -1366,6 +1564,7 @@ function submitRec(){
     childName: ans.childName||'',
     cgName: ans.cgName||'',
     _whoSigns:(Array.isArray(ans.C16)?ans.C16:[]).filter(x=>x!=='None present').join('; '),
+    _consent: consentGiven(ans)?'Given':'Incomplete',
     _synced:false                     /* saved here first — always */
   });
   records.push(rec); Store.set(REC_KEY,records); discardDraft();
@@ -1476,9 +1675,28 @@ function syncNow(){
 function setSync(cls,txt){const e=document.getElementById('syncPill');if(!e)return;e.className='sync '+cls;e.textContent=txt;}
 function renderDone(r){
   const n=r.setNo?parseInt(r.setNo,10):null;
-  const primary = n!=null
-    ? `<button class="btn btn-primary btn-block" onclick="renderSet(${n})">Back to Set ${n}</button>`
-    : `<button class="btn btn-primary btn-block" onclick="openEnrol()">Back to enrolment</button>`;
+  const wasCase=String(r._group)==='Case';
+  const st=n!=null?setState(n):null;
+  const nx=n!=null?nextCaseAfter(n):null;
+  let primary,secondary='';
+  if(n==null){
+    primary=`<button class="btn btn-primary btn-block" onclick="openEnrol()">Back to enrolment</button>`;
+  }else if(wasCase){
+    /* cases lead: go straight to the next set's case, controls wait for later */
+    primary = nx!=null
+      ? `<button class="btn btn-primary btn-block" onclick="startForm(${nx},'case')">Start Case ${nx}</button>`
+      : `<button class="btn btn-primary btn-block" onclick="openSets()">All cases done · back to sets</button>`;
+    secondary = `<button class="btn btn-ghost btn-block" onclick="renderSet(${n})">Controls for Set ${n} · ${(st.aDone?1:0)+(st.bDone?1:0)}/2 done</button>`;
+  }else{
+    /* a control: offer the sibling control, else move on to the next case */
+    const sib = !st.aDone?'a':!st.bDone?'b':null;
+    primary = sib
+      ? `<button class="btn btn-primary btn-block" onclick="startForm(${n},'${sib}')">Start Control ${n}${sib}</button>`
+      : nx!=null
+        ? `<button class="btn btn-primary btn-block" onclick="startForm(${nx},'case')">Start Case ${nx}</button>`
+        : `<button class="btn btn-primary btn-block" onclick="openSets()">Back to sets</button>`;
+    secondary = `<button class="btn btn-ghost btn-block" onclick="renderSet(${n})">Back to Set ${n}</button>`;
+  }
   const line = `${esc(r._id)} · ${esc(r.childName||'')} (${esc(r._group)})<br>Caregiver: ${esc(r.cgName||'—')}`;
   app.innerHTML=`<div class="body"><div class="done">
     <div class="circle">${I.check}</div>
@@ -1490,6 +1708,7 @@ function renderDone(r){
       This record is safe on the device. If it hasn’t reached Google Sheets it stays queued and syncs itself when the connection returns.</p>
     <div class="actions">
       ${primary}
+      ${secondary}
       <button class="btn btn-ghost btn-block" onclick="openList()">View records</button>
       <button class="btn btn-ghost btn-block" onclick="renderHome()">Back to home</button>
     </div></div></div>`;
@@ -1498,6 +1717,43 @@ function renderDone(r){
 /* =========================================================
    RECORDS
    ========================================================= */
+/* Follow-up is recorded per day (wellbeing / parasite density / Hb). A day
+   counts as done when any of the three is filled. Cases only. */
+function fuDays(r){
+  const d=[];
+  for(let i=1;i<=5;i++){
+    const w=r['E28_d'+i+'_well'];
+    const has=(Array.isArray(w)?w.length>0:!!w) || (r['E28_d'+i+'_pd']!==undefined&&r['E28_d'+i+'_pd']!=='')
+             || (r['E28_d'+i+'_hb']!==undefined&&r['E28_d'+i+'_hb']!=='');
+    if(has) d.push(i);
+  }
+  return d;
+}
+function fuLabel(r){ const d=fuDays(r); return d.length? 'Follow-up: D'+d.join(', D') : 'No follow-up'; }
+
+/* Every case on this device with the follow-up days it has, so it is obvious
+   at a glance which cases still need one. */
+function openFollowUp(){
+  const cases=records.map((r,i)=>({r,i})).filter(x=>isCase(x.r));
+  const withFu=cases.filter(x=>fuDays(x.r).length);
+  const hd=`<div class="appbar"><button class="ico-btn" onclick="renderList()">${I.back}</button>
+    <div class="titles"><div class="eyebrow">Cases on this device</div><div class="title">Follow-up</div></div>
+    <img class="bar-logo" src="${LOGO}" alt="ICF-SL"></div>`;
+  const rows = cases.length ? cases.slice().reverse().map(x=>{
+      const d=fuDays(x.r), done=d.length>0;
+      return `<div class="li" style="cursor:pointer" onclick="openRec(${x.i})">
+        <div class="av">${esc(x.r._id||'?')}</div>
+        <div class="m"><div class="t">${esc(x.r.childName||'—')}</div>
+          <div class="s">${done?'Days '+d.join(', ')+' recorded':'No follow-up recorded yet'}</div></div>
+        <span class="pill ${done?'ctrl':'case'}">${done?d.length+'/5':'NONE'}</span></div>`;
+    }).join('')
+    : '<div style="font:400 12.5px var(--body);color:var(--muted);padding:14px 0">No cases on this device yet.</div>';
+  app.innerHTML=hd+`<div class="body"><div class="list">
+    <h2>Follow-up by case</h2>
+    <div class="sub">${withFu.length} of ${cases.length} case${cases.length===1?'':'s'} have at least one follow-up day</div>
+    <div class="card" style="padding-top:5px">${rows}</div>
+  </div></div>`;
+}
 function openList(){listF='all';detail=-1;renderList();}
 function setLF(f){listF=f;renderList();}
 function lFilt(){
@@ -1531,13 +1787,14 @@ function renderList(){
         return `<div class="li" style="cursor:pointer" onclick="openRec(${x.i})">
         <div class="av">${esc(r._id||'?')}</div>
         <div class="m"><div class="t">${esc(line1)}</div>
-          <div class="s">${r.cgName?'Caregiver: '+esc(r.cgName)+' · ':''}${esc(r.hospital||'')}</div></div>
+          <div class="s">${r.cgName?'Caregiver: '+esc(r.cgName)+' · ':''}${esc(r.hospital||'')}${c?' · '+esc(fuLabel(r)):''}</div></div>
         <span class="pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span>
         <span class="sdot ${r._synced?'ok':'wait'}" title="${r._synced?'Synced to Google Sheets':'Not yet synced'}"></span></div>`;}).join('')
       :'<div style="font:400 12.5px var(--body);color:var(--muted);padding:14px 0">No records in this filter.</div>'}
     </div>
     ${pending().length?`<button class="btn btn-primary btn-block" style="margin-bottom:11px" onclick="syncNow()">
         Resubmit ${pending().length} unsynced record${pending().length===1?'':'s'}</button>`:''}
+    <button class="btn btn-ghost btn-block btn-sm" style="margin-bottom:11px" onclick="openFollowUp()">Follow-up status by case</button>
     <div class="tools">
       <button class="btn btn-ghost" onclick="exportCSV(lFilt().map(x=>x.r),'severe_malaria.csv')">Export CSV</button>
       <button class="btn btn-danger" onclick="clearAll()">Clear all</button>
@@ -1551,7 +1808,7 @@ function renderRec(){
   let body='',cur='';
   ALL.filter(q=>visible(q)&&q.type!=='note'&&q.type!=='auto').forEach(q=>{
     if(q.sec!==cur){cur=q.sec;body+=`<div class="rv-sec">${esc(cur)}</div>`;}
-    body+=`<div class="rv-item"><span class="q">${esc(q.q)}</span><span class="a">${esc(fmt(q))}</span></div>`;
+    body+=`<div class="rv-item"><span class="q">${esc(qText(q))}</span><span class="a">${esc(fmt(q))}</span></div>`;
   });
   ans=save;
   const pill = `<span class="tag-pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span>`;
@@ -1561,8 +1818,9 @@ function renderRec(){
       ${pill}</div>
     <div class="body"><div class="rv">
       <div class="rv-head"><div class="id">${esc(r._id)}</div>
-        <div class="meta">${sub?sub+'<br>':''}${esc(r.hospital||'')} · ${esc(r.enrolDate||'')} ${esc(r.enrolTime||'')}<br>${esc(r.interviewer||'')}</div></div>
+        <div class="meta">${sub?sub+'<br>':''}${esc(r.hospital||'')} · ${esc(r.enrolDate||'')} ${esc(r.enrolTime||'')}<br>${esc(r.interviewer||'')}${c?'<br>'+esc(fuLabel(r)):''}</div></div>
       ${body}
+      ${c?`<button class="btn btn-ghost btn-block btn-sm" style="margin-top:12px" onclick="openFollowUp()">Follow-up status by case</button>`:''}
     </div></div>`;
 }
 
@@ -1671,7 +1929,7 @@ function drawDash(){
    TOOLS
    ========================================================= */
 function csvCols(){
-  const meta=['_id','childName','cgName','_ts','_group','hospital','enrolDate','enrolTime','interviewer','_synced'];
+  const meta=['_id','childName','cgName','_ts','_group','hospital','enrolDate','enrolTime','interviewer','_consent','_synced'];
   const qs=[]; const hdr=[];
   ALL.forEach(q=>{
     if(q.type==='note'||q.type==='auto') return;
@@ -1680,10 +1938,10 @@ function csvCols(){
         hdr.push('Day '+d+' wellbeing','Day '+d+' parasite density','Day '+d+' Hb'); }
       return;
     }
-    qs.push(q.id); hdr.push(q.q);
+    qs.push(q.id); hdr.push(q.qc?q.q+' / '+q.qc:q.q);
     if(q.other){ qs.push(q.id+'_other'); hdr.push(q.q+' — Other (specify)'); }
   });
-  return {cols:meta.concat(qs), hdr:['ID','Form','Child name','Caregiver name','Linked child ID','Caregiver ID','Submitted at','Group','Hospital','Enrolment date','Enrolment time','Interviewer','Synced to Sheets'].concat(hdr)};
+  return {cols:meta.concat(qs), hdr:['ID','Child name','Caregiver name','Submitted at','Group','Hospital','Enrolment date','Enrolment time','Interviewer','Consent','Synced to Sheets'].concat(hdr)};
 }
 function exportCSV(data,name){
   if(!data||!data.length){toast('No data to export');return;}
