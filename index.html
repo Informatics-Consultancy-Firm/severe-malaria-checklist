@@ -311,12 +311,12 @@
   .set-card .sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .set-card .sc-no{font:700 15px/1 var(--disp);letter-spacing:.03em;color:var(--ink);}
   .set-card .sc-badge{font:700 8.5px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:5px 7px;border-radius:99px;}
-  .set-card .dots{display:flex;gap:6px;}
+  .set-card .dots{display:flex;gap:4px;}
   .set-card .dots .d{flex:1;height:6px;border-radius:99px;background:var(--sky-50);border:1px solid var(--line);position:relative;overflow:hidden;}
   .set-card .dots .d.done{background:var(--ok);border-color:var(--ok);}
   .set-card .dots .d.next{background:var(--sky-400);border-color:var(--sky-400);}
-  .set-card .sc-lbl{display:flex;gap:6px;margin-top:6px;}
-  .set-card .sc-lbl span{flex:1;text-align:center;font:600 8px/1 var(--body);letter-spacing:.04em;color:var(--muted);text-transform:uppercase;}
+  .set-card .sc-lbl{display:flex;gap:4px;margin-top:6px;}
+  .set-card .sc-lbl span{flex:1;min-width:0;text-align:center;font:600 7.5px/1 var(--body);letter-spacing:.02em;color:var(--muted);text-transform:uppercase;}
   /* states */
   .set-card.current{border-color:var(--sky-500);box-shadow:0 0 0 3px rgba(61,154,214,.14),var(--sh-sm);}
   .set-card.current .sc-badge{background:var(--sky-100);color:var(--sky-700);}
@@ -336,6 +336,25 @@
   .slot .si.case{background:var(--bad-bg);color:var(--bad);}
   .slot .si.ctrl{background:var(--ok-bg);color:var(--ok);}
   .slot .si.cg{background:var(--sky-100);color:var(--sky-700);}
+  /* the follow-up row — the fourth item in a set, after the two controls */
+  .fubar{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--sky-50);border:1px solid var(--line);
+    border-radius:16px;padding:13px 15px;margin-bottom:12px;box-shadow:var(--sh-sm);transition:.13s;}
+  .fubar.due,.fubar.done{cursor:pointer;}
+  .fubar.due:active,.fubar.done:active{transform:scale(.98);}
+  .fubar.off{opacity:.55;background:#f6f9fc;cursor:not-allowed;}
+  .fubar.done{background:var(--ok-bg);border-color:var(--ok);}
+  .fubar .fi{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;flex:0 0 auto;background:var(--white);color:var(--sky-600);border:1px solid var(--sky-200);}
+  .fubar .fi svg{width:21px;height:21px;}
+  .fubar.done .fi{background:var(--ok);border-color:var(--ok);color:#fff;}
+  .fubar.off .fi{background:#eef2f5;border-color:var(--line);color:var(--muted);}
+  .fubar .ft{flex:1;min-width:0;}
+  .fubar .ft h4{font:600 14.5px/1.15 var(--disp);color:var(--ink);}
+  .fubar .ft span{font:400 11px/1.4 var(--body);color:var(--muted);margin-top:2px;display:block;}
+  .fubar .fs{font:700 9px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:6px 8px;border-radius:99px;flex:0 0 auto;}
+  .fubar .fs.go{background:var(--warn-bg);color:#8a6d00;}
+  .fubar .fs.done{background:var(--ok);color:#fff;}
+  .fubar .fs.wait{background:#eef2f5;color:var(--muted);}
+
   .person{margin-bottom:16px;}
   .person-hd{font:700 11px/1 var(--body);letter-spacing:.05em;text-transform:uppercase;color:var(--sky-700);margin:0 2px 8px;}
   .person .slot{margin-bottom:9px;}
@@ -381,7 +400,7 @@ const REC_KEY='sm_records_v1', URL_KEY='sm_gas_url_v1', ME_KEY='sm_interviewer_v
 const UPD_KEY='sm_last_update_v1';
 /* Bump this whenever a new build is put on the server. It is what the Update
    button reports, so a fieldworker can read it back to you over the phone. */
-const APP_VERSION='2026.07.23';
+const APP_VERSION='2026.07.23b';
 let records=Store.get(REC_KEY,[]);
 GAS_URL=Store.get(URL_KEY,GAS_URL)||GAS_URL;
 let interviewer=Store.get(ME_KEY,'');
@@ -429,13 +448,15 @@ const ORAL_AM=['AL','ASAQ','SP+ASAQ','DP'];
 const F_STUDYID_CHILD={id:'studyId', sec:'Enrolment', type:'auto', q:'Study ID',
   help:'Set by the card you opened. Cases are numbered 1–115 (e.g. Case 1); each control takes its case number plus its slot (e.g. Control 1a).'};
 /* Child name — first / middle / last */
-const F_CHILD_FIRST ={id:'childFirst',  sec:'Enrolment', type:'text', q:"Child first name", ph:'First name'};
-const F_CHILD_MIDDLE={id:'childMiddle', sec:'Enrolment', type:'text', q:"Child middle name", ph:'Middle name', optional:true};
-const F_CHILD_LAST  ={id:'childLast',   sec:'Enrolment', type:'text', q:"Child last name", ph:'Last name'};
+const F_CHILD_FIRST ={id:'childFirst',  sec:'Enrolment', type:'text', q:"Child first name", ph:'First name',
+  rvInitials:'Child initials', rvOf:a=>fullName(a.childFirst,a.childMiddle,a.childLast)};
+const F_CHILD_MIDDLE={id:'childMiddle', sec:'Enrolment', type:'text', q:"Child middle name", ph:'Middle name', optional:true, rvHide:true};
+const F_CHILD_LAST  ={id:'childLast',   sec:'Enrolment', type:'text', q:"Child last name", ph:'Last name', rvHide:true};
 /* Caregiver name — first / middle / last (shown in the caregiver section) */
-const F_CG_FIRST ={id:'cgFirst',  sec:'A · Caregiver information', type:'text', q:'Caregiver first name', ph:'First name'};
-const F_CG_MIDDLE={id:'cgMiddle', sec:'A · Caregiver information', type:'text', q:'Caregiver middle name', ph:'Middle name', optional:true};
-const F_CG_LAST  ={id:'cgLast',   sec:'A · Caregiver information', type:'text', q:'Caregiver last name', ph:'Last name'};
+const F_CG_FIRST ={id:'cgFirst',  sec:'A · Caregiver information', type:'text', q:'Caregiver first name', ph:'First name',
+  rvInitials:'Caregiver initials', rvOf:a=>fullName(a.cgFirst,a.cgMiddle,a.cgLast)};
+const F_CG_MIDDLE={id:'cgMiddle', sec:'A · Caregiver information', type:'text', q:'Caregiver middle name', ph:'Middle name', optional:true, rvHide:true};
+const F_CG_LAST  ={id:'cgLast',   sec:'A · Caregiver information', type:'text', q:'Caregiver last name', ph:'Last name', rvHide:true};
 const F_ENROLDATE={id:'enrolDate', sec:'Enrolment', type:'date', q:'Date of enrolment'};
 const F_ENROLTIME={id:'enrolTime', sec:'Enrolment', type:'time', q:'Time of enrolment'};
 const F_INTERVIEWER={id:'interviewer', sec:'Enrolment', type:'text', q:'Interviewer / Clinician', ph:'Full name'};
@@ -500,19 +521,13 @@ const CONSENT=[
      q:'The information sheet has been read to me and I understood it, I had the chance to ask questions and they were answered, I have not been coerced or induced in any way, I agree for my child to take part in this study, and I give permission for the research team to take notes and to review my child\u2019s clinical records.',
      help:'Read this back to the parent or legal guardian before recording their answer.'},
 
-  {id:'CNname', sec:CONS_SEC, type:'text',   q:'Name of parent / legal guardian giving consent', ph:'Full name'},
+  {id:'CNname', sec:CONS_SEC, type:'text',   q:'Name of parent / legal guardian giving consent', ph:'Full name',
+     rvInitials:'Parent / guardian initials', rvOf:a=>a.CNname},
   {id:'CNrel',  sec:CONS_SEC, type:'choice', q:'Relationship to child',
      options:['Mother','Father','Grandparent','Aunty'], other:true},
   {id:'CNdate', sec:CONS_SEC, type:'date',   q:'Date consent taken'},
   {id:'CNtime', sec:CONS_SEC, type:'time',   q:'Time consent taken'},
 
-  {id:'CNlit',  sec:CONS_SEC, type:'choice', options:['Yes','No'], yn:true,
-     q:'Is the parent / legal guardian unable to read?',
-     help:'If yes, a literate witness must be present and confirm the consent.'},
-  {id:'CNwit',    sec:CONS_SEC, type:'text', q:'Name of literate witness', ph:'Full name', when:a=>a.CNlit==='Yes'},
-  {id:'CNwitRel', sec:CONS_SEC, type:'text', q:'Relationship of witness to guardian', ph:'e.g. Neighbour', when:a=>a.CNlit==='Yes'},
-  {id:'CNwitOk',  sec:CONS_SEC, type:'check', q:'Witness confirmation', when:a=>a.CNlit==='Yes',
-     decl:'The witness confirms the information sheet and consent form were accurately explained to the parent or guardian in a language they understand, and that consent was given freely.'},
 ];
 /* the single consent statement — a No here means no enrolment */
 const CONSENT_REQ=['CN1'];
@@ -626,11 +641,11 @@ const CRF=[
 ];
 
 /* ---------- Follow-up form: one identical section per day ----------
-   A separate sub-form, not part of the case report. Days are filled on
-   subsequent days of admission until the case reaches a final outcome, so
-   nothing here is required and the days are not locked to each other — a day
-   can be left blank, and they can be filled in any order. */
-const FU_DAYS=[1,2,3,4];
+   A separate sub-form, not part of the case report. Up to three follow-ups are
+   recorded on subsequent days of admission until the case reaches a final
+   outcome. Nothing here is required and the days are not tied to each other —
+   any one can be started first, and any can be left blank. */
+const FU_DAYS=[1,2,3];   /* three follow-ups at most */
 const fuSec=d=>'Follow-up · Day '+d;
 function fuQs(d){
   const P='FU'+d, S=fuSec(d);
@@ -807,6 +822,12 @@ const ALL=CONSENT
 const byId=id=>ALL.find(q=>q.id===id);
 /* join name parts into a single display name */
 function fullName(first,middle,last){ return [first,middle,last].map(s=>String(s||'').trim()).filter(Boolean).join(' '); }
+/* "Mohamed Kama" -> "MK". Names are collected in full so the child can be found
+   on the ward, but the review and the saved-record view show initials only, so
+   a screen held up in a busy ward does not display anyone's name. */
+function initials(s){
+  return String(s||'').trim().split(/[\s\-']+/).filter(Boolean).map(w=>w[0].toUpperCase()).join('');
+}
 /* normalise a record's child name for duplicate comparison */
 function normName(r){
   const nm=r.childName||fullName(r.childFirst,r.childMiddle,r.childLast);
@@ -876,6 +897,7 @@ let ans={}, pg=0;
 /* 'enrol' = a new record being collected; 'outcome' = completing the outcome
    and follow-up of a case already saved. editIdx is that record's index. */
 let mode='enrol', editIdx=-1;
+let outcomeBack=null;   /* set number the sub-form was opened from, if any */
 PAGES=pages();
 let dashData=[], dashSrc='device', dashLoading=false, dashF='all';
 let listF='all', detail=-1;
@@ -1166,8 +1188,9 @@ function renderSets(){
         <div class="${st.caseDone?'d done':nextK==='case'?'d next':'d'}"></div>
         <div class="${st.aDone?'d done':nextK==='a'?'d next':'d'}"></div>
         <div class="${st.bDone?'d done':nextK==='b'?'d next':'d'}"></div>
+        <div class="${outcomeDoneIn(n)?'d done':(st.caseDone?'d next':'d')}"></div>
       </div>
-      <div class="sc-lbl"><span>Case</span><span>Ctrl a</span><span>Ctrl b</span></div>
+      <div class="sc-lbl"><span>Case</span><span>Ctrl a</span><span>Ctrl b</span><span>F-up</span></div>
     </button>`;
   };
   let cards=''; for(let n=s;n<=e;n++) cards+=card(n);
@@ -1211,13 +1234,39 @@ function renderSet(n){
     <div class="titles"><div class="eyebrow">${esc(h.code)} · matched set</div><div class="title">Set ${n}</div></div>
     <img class="bar-logo" src="${LOGO}" alt="ICF-SL"></div>`;
   app.innerHTML=hd+`<div class="body"><div class="list">
-    <div class="set-head"><div class="id">Set ${n}${st.complete?' · complete':''}</div>
+    <div class="set-head"><div class="id">Set ${n}${st.complete?' · complete':''}${outcomeDoneIn(n)?' · outcome recorded':''}</div>
       <div class="meta">${esc(h.name)} · ${esc(h.district)}<br>One case and two matched controls. Each form covers the child (CRF) and its caregiver in one go. A set's case is recorded before its own controls, since a control has to match the case's age group — but the controls can be found any time after.</div></div>
     ${slot('case','Case '+n)}
     ${slot('a','Control '+n+'a')}
     ${slot('b','Control '+n+'b')}
+    ${fuBar(n,st)}
   </div></div>`;
 }
+/* The follow-up / outcome sub-form sits under the case it belongs to, inside the
+   same card. It stays inert until that case has been submitted — there is no
+   record to attach a follow-up to before then. */
+function caseIdxOf(n){ return records.findIndex(r=>String(r._id)==='Case '+n); }
+function outcomeDoneIn(n){ const i=caseIdxOf(n); return i>-1 && !outcomePending(records[i]); }
+function fuBar(n,st){
+  const i=caseIdxOf(n);
+  /* the case may be recorded on another device (known from the sheet) — then it
+     is done, but this device holds no record to open */
+  if(i<0){
+    const why = st.caseDone ? 'recorded on another device' : 'submit the case first';
+    return `<button class="fubar off"><span class="fi">${I.clip}</span>
+      <span class="ft"><h4>Case ${n} follow-up</h4><span>${why}</span></span>
+      <span class="fs wait">Locked</span></button>`;
+  }
+  const r=records[i], pend=outcomePending(r), d=fuDays(r);
+  const sub = pend
+    ? (d.length||r.F29 ? 'in progress · '+(d.length?'day'+(d.length===1?' ':'s ')+d.join(', '):'outcome started') : 'any of the 3 follow-ups, then the outcome')
+    : (r.F29?esc(r.F29):'recorded')+(d.length?' · '+d.length+' day'+(d.length===1?'':'s'):'');
+  return `<button class="fubar ${pend?'due':'done'}" onclick="openOutcome(${i},${n})">
+    <span class="fi">${pend?I.clip:I.tick2}</span>
+    <span class="ft"><h4>Case ${n} follow-up</h4><span>${sub}</span></span>
+    <span class="fs ${pend?'go':'done'}">${pend?(d.length||r.F29?'Continue':'Start'):'Edit'}</span></button>`;
+}
+
 /* open a saved record straight from its ID */
 function viewById(id){
   const i=records.findIndex(r=>String(r._id)===id);
@@ -1245,7 +1294,7 @@ function mirrorChildToCaregiver(){
 function recById(id){ return records.find(r=>String(r._id)===id) || (Array.isArray(dashData)&&dashData.find(r=>String(r._id)===id)); }
 
 function startForm(setNo,kind){
-  mode='enrol'; editIdx=-1;
+  mode='enrol'; editIdx=-1; outcomeBack=null;
   curHosp=hospForSet(setNo);
   if(kind!=='case' && !setState(setNo).caseDone){ toast('Do the case first'); return; }
   const id=childIdOf(setNo,kind);
@@ -1629,7 +1678,8 @@ function prevPage(){
 }
 
 /* ---------- outcome and follow-up, recorded later ---------- */
-function openOutcome(i){
+function openOutcome(i,fromSet){
+  outcomeBack = (fromSet===undefined||fromSet===null) ? null : fromSet;
   const r=records[i];
   if(!r){ toast('Record not found'); return; }
   if(!outcomeApplies(r)){ toast('Outcome is recorded for cases only'); return; }
@@ -1641,9 +1691,9 @@ function openOutcome(i){
 /* leaving keeps whatever has been entered — it is already in the record */
 function leaveOutcome(){
   saveDraft();
-  const i=editIdx;
-  mode='enrol'; editIdx=-1; ans={}; pg=0; lastVis=''; PAGES=pages();
-  openRec(i);
+  const i=editIdx, back=outcomeBack;
+  mode='enrol'; editIdx=-1; outcomeBack=null; ans={}; pg=0; lastVis=''; PAGES=pages();
+  if(back!==null) renderSet(back); else openRec(i);
 }
 function renderOutcomeReview(){
   /* blank days are left out so the review stays readable */
@@ -1655,7 +1705,7 @@ function renderOutcomeReview(){
       <img class="bar-logo" src="${LOGO}" alt="ICF-SL"></div>
     <div class="body"><div class="rv">
       <div class="rv-head"><div class="id">${esc(ans.studyId||r._id||'')}</div>
-        <div class="meta">${esc(ans.childName||'')}<br>${esc(ans.hospital||'')}</div></div>
+        <div class="meta">${esc(initials(ans.childName))}<br>${esc(ans.hospital||'')}</div></div>
       <div class="rv-count">The outcome and follow-up for this case. The rest of the record was submitted at enrolment and is unchanged.</div>
       ${sheet.body}
     </div></div>
@@ -1670,9 +1720,9 @@ function saveOutcome(){
   r._outcomeAt=new Date().toISOString();
   r._synced=false;                 /* the record changed — send it again */
   Store.set(REC_KEY,records);
-  const i=editIdx;
-  mode='enrol'; editIdx=-1; ans={}; pg=0; lastVis=''; PAGES=pages();
-  renderOutcomeDone(r,i);
+  const i=editIdx, back=outcomeBack;
+  mode='enrol'; editIdx=-1; outcomeBack=null; ans={}; pg=0; lastVis=''; PAGES=pages();
+  renderOutcomeDone(r,i,back);
 
   if(!GAS_URL){ setSync('warn','◍ Saved on this device only'); return; }
   if(!navigator.onLine){ setSync('queued','◍ No internet — queued, will sync automatically'); return; }
@@ -1687,7 +1737,7 @@ function saveOutcome(){
     }
   });
 }
-function renderOutcomeDone(r,i){
+function renderOutcomeDone(r,i,back){
   const left=pendingOutcomes().length;
   const fu=fuDays(r);
   app.innerHTML=`<div class="body"><div class="done">
@@ -1701,6 +1751,7 @@ function renderOutcomeDone(r,i){
       This case is now complete. The updated record re-syncs on its own if it hasn’t gone through yet.</p>
     <div class="actions">
       ${left?`<button class="btn btn-primary btn-block" onclick="openPending()">${left} case${left===1?'':'s'} still awaiting an outcome</button>`:''}
+      ${back!==null&&back!==undefined?`<button class="btn btn-ghost btn-block" onclick="renderSet(${back})">Back to Set ${back}</button>`:''}
       <button class="btn btn-ghost btn-block" onclick="openRec(${i})">View the full record</button>
       <button class="btn btn-ghost btn-block" onclick="renderHome()">Back to home</button>
     </div></div></div>`;
@@ -1722,8 +1773,15 @@ function fmt(q){
 function fullSheet(opts){
   opts=opts||{};
   let body='',cur='',asked=0,blank=0;
-  ALL.filter(q=>visible(q)&&q.type!=='note'&&q.type!=='auto'&&(!opts.only||opts.only(q))).forEach(q=>{
+  ALL.filter(q=>visible(q)&&q.type!=='note'&&q.type!=='auto'&&!q.rvHide&&(!opts.only||opts.only(q))).forEach(q=>{
     if(q.sec!==cur){cur=q.sec;body+=`<div class="rv-sec">${esc(cur)}</div>`;}
+    /* names are shown as initials, the parts folded into a single row */
+    if(q.rvInitials){
+      const ini=initials(q.rvOf(ans));
+      asked++; if(!ini) blank++;
+      body+=`<div class="rv-item"><span class="q">${esc(q.rvInitials)}</span><span class="a ${ini?'':'empty'}">${esc(ini||'—')}</span></div>`;
+      return;
+    }
     const val=fmt(q), miss=(val==='—'&&!isOptional(q));
     asked++; if(val==='—') blank++;
     body+=`<div class="rv-item"><span class="q">${esc(qText(q))}</span><span class="a ${opts.flag&&miss?'empty':(val==='—'?'empty':'')}">${esc(val)}</span></div>`;
@@ -1735,7 +1793,7 @@ function renderReview(){
      they belong to the later pass and are blank at this point */
   const sheet=fullSheet({flag:true, only:q=>!isOutcomeQ(q)});
   const body=sheet.body;
-  const nm=fullName(ans.childFirst,ans.childMiddle,ans.childLast);
+  const nm=initials(fullName(ans.childFirst,ans.childMiddle,ans.childLast));
   app.innerHTML=`<div class="appbar">
       <button class="ico-btn" onclick="backFromReview()">${I.back}</button>
       <div class="titles"><div class="eyebrow">Almost done</div><div class="title">Review &amp; submit</div></div>
@@ -2019,7 +2077,7 @@ function openPending(back){
     ${list}
   </div></div>`;
 }
-function openList(){mode='enrol';editIdx=-1;listF='all';detail=-1;renderList();}
+function openList(){mode='enrol';editIdx=-1;outcomeBack=null;listF='all';detail=-1;renderList();}
 function setLF(f){listF=f;renderList();}
 function lFilt(){
   const all=records.map((r,i)=>({r,i}));
@@ -2073,7 +2131,7 @@ function renderRec(){
   const sheet=fullSheet(); const body=sheet.body;
   ans=save;
   const pill = `<span class="tag-pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span>`;
-  const sub = esc(r.childName||'')+(r.cgName?' · caregiver: '+esc(r.cgName):'');
+  const sub = esc(initials(r.childName))+(r.cgName?' · caregiver: '+esc(initials(r.cgName)):'');
   app.innerHTML=`<div class="appbar"><button class="ico-btn" onclick="renderList()">${I.back}</button>
       <div class="titles"><div class="eyebrow">Enrolment</div><div class="title">${esc(r._id)}</div></div>
       ${pill}</div>
