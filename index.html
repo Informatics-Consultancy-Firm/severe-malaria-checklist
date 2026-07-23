@@ -400,7 +400,7 @@ const REC_KEY='sm_records_v1', URL_KEY='sm_gas_url_v1', ME_KEY='sm_interviewer_v
 const UPD_KEY='sm_last_update_v1';
 /* Bump this whenever a new build is put on the server. It is what the Update
    button reports, so a fieldworker can read it back to you over the phone. */
-const APP_VERSION='2026.07.23b';
+const APP_VERSION='2026.07.23d';
 let records=Store.get(REC_KEY,[]);
 GAS_URL=Store.get(URL_KEY,GAS_URL)||GAS_URL;
 let interviewer=Store.get(ME_KEY,'');
@@ -435,6 +435,7 @@ function setRange(h){
 const WHO_SIGNS=['Severe anaemia','Convulsions','Prostration','Coma','Respiratory distress','Hypoglycaemia','Shock','Jaundice','Haemoglobinuria'];
 const SUPPORTIVE=['Blood transfusion','IV fluids','Antibiotics','Anticonvulsants','Oxygen','Glucose','Antipyretics'];
 const ORAL_AM=['AL','ASAQ','SP+ASAQ','DP'];
+const PAREN_AM=['Artemether lumefantrine','Artesunate'];
 
 /* =========================================================
    INSTRUMENTS
@@ -448,23 +449,21 @@ const ORAL_AM=['AL','ASAQ','SP+ASAQ','DP'];
 const F_STUDYID_CHILD={id:'studyId', sec:'Enrolment', type:'auto', q:'Study ID',
   help:'Set by the card you opened. Cases are numbered 1–115 (e.g. Case 1); each control takes its case number plus its slot (e.g. Control 1a).'};
 /* Child name — first / middle / last */
-const F_CHILD_FIRST ={id:'childFirst',  sec:'Enrolment', type:'text', q:"Child first name", ph:'First name',
-  rvInitials:'Child initials', rvOf:a=>fullName(a.childFirst,a.childMiddle,a.childLast)};
-const F_CHILD_MIDDLE={id:'childMiddle', sec:'Enrolment', type:'text', q:"Child middle name", ph:'Middle name', optional:true, rvHide:true};
-const F_CHILD_LAST  ={id:'childLast',   sec:'Enrolment', type:'text', q:"Child last name", ph:'Last name', rvHide:true};
+/* No full names are collected anywhere. Initials only, so nothing on the device
+   or in the sheet identifies a child or a guardian by name. */
+const F_CHILD_INIT ={id:'childInit', sec:'Enrolment', type:'initials', q:'Child initials',
+  ph:'e.g. MK', help:'Initials only \u2014 do not enter a full name.'};
 /* Caregiver name — first / middle / last (shown in the caregiver section) */
-const F_CG_FIRST ={id:'cgFirst',  sec:'A · Caregiver information', type:'text', q:'Caregiver first name', ph:'First name',
-  rvInitials:'Caregiver initials', rvOf:a=>fullName(a.cgFirst,a.cgMiddle,a.cgLast)};
-const F_CG_MIDDLE={id:'cgMiddle', sec:'A · Caregiver information', type:'text', q:'Caregiver middle name', ph:'Middle name', optional:true, rvHide:true};
-const F_CG_LAST  ={id:'cgLast',   sec:'A · Caregiver information', type:'text', q:'Caregiver last name', ph:'Last name', rvHide:true};
+const F_CG_INIT ={id:'cgInit', sec:'A · Caregiver information', type:'initials', q:'Caregiver initials',
+  ph:'e.g. AK', help:'Initials only \u2014 do not enter a full name.'};
 const F_ENROLDATE={id:'enrolDate', sec:'Enrolment', type:'date', q:'Date of enrolment'};
 const F_ENROLTIME={id:'enrolTime', sec:'Enrolment', type:'time', q:'Time of enrolment'};
 const F_INTERVIEWER={id:'interviewer', sec:'Enrolment', type:'text', q:'Interviewer / Clinician', ph:'Full name'};
 
 /* form header (enrolment section) */
-const HEAD=[F_STUDYID_CHILD, F_CHILD_FIRST, F_CHILD_MIDDLE, F_CHILD_LAST, F_ENROLDATE, F_ENROLTIME, F_INTERVIEWER];
+const HEAD=[F_STUDYID_CHILD, F_CHILD_INIT, F_ENROLDATE, F_ENROLTIME, F_INTERVIEWER];
 /* caregiver name fields lead the embedded caregiver questionnaire */
-const CG_NAME=[F_CG_FIRST, F_CG_MIDDLE, F_CG_LAST];
+const CG_NAME=[F_CG_INIT];
 
 /* Set programmatically when a fieldworker opens a card slot — never rendered as
    questions, but kept in ALL so they still show in Review, the record detail and
@@ -521,8 +520,8 @@ const CONSENT=[
      q:'The information sheet has been read to me and I understood it, I had the chance to ask questions and they were answered, I have not been coerced or induced in any way, I agree for my child to take part in this study, and I give permission for the research team to take notes and to review my child\u2019s clinical records.',
      help:'Read this back to the parent or legal guardian before recording their answer.'},
 
-  {id:'CNname', sec:CONS_SEC, type:'text',   q:'Name of parent / legal guardian giving consent', ph:'Full name',
-     rvInitials:'Parent / guardian initials', rvOf:a=>a.CNname},
+  {id:'CNinit', sec:CONS_SEC, type:'initials', q:'Initials of parent / legal guardian giving consent',
+     ph:'e.g. AK', help:'Initials only \u2014 do not enter a full name.'},
   {id:'CNrel',  sec:CONS_SEC, type:'choice', q:'Relationship to child',
      options:['Mother','Father','Grandparent','Aunty'], other:true},
   {id:'CNdate', sec:CONS_SEC, type:'date',   q:'Date consent taken'},
@@ -559,12 +558,19 @@ const CRF=[
 
   /* SECTION B — HISTORY OF PRESENT ILLNESS */
   {id:'B6', n:6, sec:'B · History of present illness', type:'date',   q:'Date of fever onset'},
+  {id:'B6t',      sec:'B · History of present illness', type:'time',   q:'Time of fever onset',
+     help:'Best estimate from the caregiver.'},
   {id:'B7', n:7, sec:'B · History of present illness', type:'multi',  q:'Other symptoms before admission',
      help:'Tick all that apply.',
      options:['Headache','Vomiting','Convulsions','Difficulty breathing','Poor feeding','Lethargy','Unconsciousness','Diarrhoea'], other:true},
-  {id:'B8', n:8, sec:'B · History of present illness', type:'number', q:'Days ill before admission',
-     qc:'Days ill before visiting the facility',   /* controls are seen at OPD, not admitted */
-     unit:'days', min:0},
+  {id:'B8a',n:8, sec:'B · History of present illness', type:'date', q:'Date admitted',
+     qc:'Date of facility visit'},                 /* controls are seen at OPD, not admitted */
+  {id:'B8b',      sec:'B · History of present illness', type:'time', q:'Time admitted',
+     qc:'Time of facility visit'},
+  /* worked out from the two date-times above, never typed */
+  {id:'B8', n:8, sec:'B · History of present illness', type:'daysill', q:'Days ill before admission (auto)',
+     qc:'Days ill before the facility visit (auto)',
+     from:a=>daysIll(a)},
   {id:'B9v',n:9, sec:'B · History of present illness', type:'multi',  q:'History of malaria vaccine, doses received',
      help:'Tick each dose received.', options:['Dose 1','Dose 2','Dose 3','Dose 4'], none:'None received', optional:true},
   {id:'B9vVer', sec:'B · History of present illness', type:'choice', q:'Malaria vaccine history verified?',
@@ -619,7 +625,7 @@ const CRF=[
   {id:'E24',n:24,sec:'E · Treatment and monitoring', type:'text',   q:'Oral total dose', ph:'Total dose',
      when:a=>Array.isArray(a.E23)&&a.E23.indexOf('Oral')>-1},
   {id:'E23p',   sec:'E · Treatment and monitoring', type:'choice', q:'Type of parenteral antimalarial',
-     options:['Artemether lumefantrine','Artesunate'], when:a=>Array.isArray(a.E23)&&a.E23.indexOf('Parenteral')>-1},
+     options:PAREN_AM, when:a=>Array.isArray(a.E23)&&a.E23.indexOf('Parenteral')>-1},
   {id:'E25',n:25,sec:'E · Treatment and monitoring', type:'choice', q:'Parenteral route of administration',
      options:['IV','IM'], when:a=>Array.isArray(a.E23)&&a.E23.indexOf('Parenteral')>-1},
   {id:'E25b',   sec:'E · Treatment and monitoring', type:'text',   q:'Parenteral total dose', ph:'Total dose',
@@ -650,18 +656,20 @@ const fuSec=d=>'Follow-up · Day '+d;
 function fuQs(d){
   const P='FU'+d, S=fuSec(d);
   const C=a=>isCase(a);                          /* cases only */
-  const yes=k=>a=>isCase(a)&&a[P+k]==='Yes';
+  /* the severity and treatment questions are the CASE's own questions reused —
+     same wording, same option lists (WHO_SIGNS, ORAL_AM, PAREN_AM, SUPPORTIVE).
+     Only the questions are shared; no answer is ever copied from the case. */
+  const am=part=>a=>isCase(a)&&Array.isArray(a[P+'am'])&&a[P+'am'].indexOf(part)>-1;
   return [
-    {id:P+'stab', sec:S, stage:'outcome', fuDay:d, type:'choice', options:['Yes','No'], yn:true,
-       q:'Vitals stable', optional:true, when:C},
     {id:P+'temp', sec:S, stage:'outcome', fuDay:d, type:'number', q:'Temperature', unit:'°C', min:25, max:45, dec:true, optional:true, when:C},
     {id:P+'hr',   sec:S, stage:'outcome', fuDay:d, type:'number', q:'Heart rate', unit:'beats/min', min:0, optional:true, when:C},
     {id:P+'spo2', sec:S, stage:'outcome', fuDay:d, type:'number', q:'SpO₂', unit:'%', min:0, max:100, optional:true, when:C},
+    {id:P+'stab', sec:S, stage:'outcome', fuDay:d, type:'choice', options:['Yes','No'], yn:true,
+       q:'Vitals stable', optional:true, when:C},
 
-    {id:P+'sev',  sec:S, stage:'outcome', fuDay:d, type:'choice', options:['Yes','No'], yn:true,
-       q:'Signs of severe malaria present', optional:true, when:C},
-    {id:P+'sevL', sec:S, stage:'outcome', fuDay:d, type:'multi', q:'Signs present',
-       help:'Tick all that apply.', options:WHO_SIGNS, other:true, optional:true, when:yes('sev')},
+    /* same as Q16 on the case report */
+    {id:P+'signs',sec:S, stage:'outcome', fuDay:d, type:'multi', q:'Severe malaria signs present',
+       help:'Tick all that apply.', options:WHO_SIGNS, other:true, none:'None present', optional:true, when:C},
 
     {id:P+'pd',   sec:S, stage:'outcome', fuDay:d, type:'number', q:'Parasite density', unit:'/µL', min:0, optional:true, when:C},
     {id:P+'hb',   sec:S, stage:'outcome', fuDay:d, type:'number', q:'Haemoglobin', unit:'g/dL', min:0, max:25, dec:true, optional:true, when:C},
@@ -670,18 +678,21 @@ function fuQs(d){
 
     {id:P+'prot', sec:S, stage:'outcome', fuDay:d, type:'choice', options:['Yes','No'], yn:true,
        q:'Treatment according to protocol', optional:true, when:C},
-    {id:P+'oral', sec:S, stage:'outcome', fuDay:d, type:'choice', options:['Yes','No'], yn:true,
-       q:'Oral antimalarial given', optional:true, when:C},
-    {id:P+'oralT',sec:S, stage:'outcome', fuDay:d, type:'choice', q:'Type of oral antimalarial',
-       options:ORAL_AM, other:true, optional:true, when:yes('oral')},
-    {id:P+'oralD',sec:S, stage:'outcome', fuDay:d, type:'text', q:'Oral dosage', ph:'Dosage', optional:true, when:yes('oral')},
 
-    {id:P+'par',  sec:S, stage:'outcome', fuDay:d, type:'choice', options:['Yes','No'], yn:true,
-       q:'Parenteral antimalarial given', optional:true, when:C},
-    {id:P+'parR', sec:S, stage:'outcome', fuDay:d, type:'choice', q:'Parenteral route', options:['IV','IM'], optional:true, when:yes('par')},
-    {id:P+'parD', sec:S, stage:'outcome', fuDay:d, type:'text', q:'Parenteral dosage', ph:'Dosage', optional:true, when:yes('par')},
+    /* same as Q23 to Q25 on the case report */
+    {id:P+'am',   sec:S, stage:'outcome', fuDay:d, type:'multi', q:'Antimalarial started',
+       help:'Tick all that apply — oral, parenteral, or both.', options:['Oral','Parenteral'], optional:true, when:C},
+    {id:P+'amO',  sec:S, stage:'outcome', fuDay:d, type:'choice', q:'Type of oral antimalarial',
+       options:ORAL_AM, optional:true, when:am('Oral')},
+    {id:P+'amOd', sec:S, stage:'outcome', fuDay:d, type:'text', q:'Oral total dose', ph:'Total dose', optional:true, when:am('Oral')},
+    {id:P+'amP',  sec:S, stage:'outcome', fuDay:d, type:'choice', q:'Type of parenteral antimalarial',
+       options:PAREN_AM, optional:true, when:am('Parenteral')},
+    {id:P+'amPr', sec:S, stage:'outcome', fuDay:d, type:'choice', q:'Parenteral route of administration',
+       options:['IV','IM'], optional:true, when:am('Parenteral')},
+    {id:P+'amPd', sec:S, stage:'outcome', fuDay:d, type:'text', q:'Parenteral total dose', ph:'Total dose', optional:true, when:am('Parenteral')},
 
-    {id:P+'supp', sec:S, stage:'outcome', fuDay:d, type:'multi', q:'Other supportive treatment',
+    /* same as Q27 on the case report */
+    {id:P+'supp', sec:S, stage:'outcome', fuDay:d, type:'multi', q:'Supportive treatment given',
        help:'Tick all that apply.', options:SUPPORTIVE, other:true, optional:true, when:C}
   ];
 }
@@ -814,23 +825,26 @@ const CGQ=[
 const CGQ_FULL=[CGQ[0]].concat(CG_NAME).concat(CGQ.slice(1));
 
 const ALL=CONSENT
-  .concat([F_CHILD_FIRST,F_CHILD_MIDDLE,F_CHILD_LAST,F_ENROLDATE,F_ENROLTIME,F_INTERVIEWER])
+  .concat([F_CHILD_INIT,F_ENROLDATE,F_ENROLTIME,F_INTERVIEWER])
   .concat(ENROL_META).concat(CRF_MAIN).concat(CGQ_FULL).concat(OUTCOME_Q);
 /* order above is the order things are collected: consent, the child, the case
    report, the caregiver — then, days later, the follow-up days and the outcome.
    CGQ_FULL keeps the caregiver name fields where the form puts them. */
 const byId=id=>ALL.find(q=>q.id===id);
 /* join name parts into a single display name */
-function fullName(first,middle,last){ return [first,middle,last].map(s=>String(s||'').trim()).filter(Boolean).join(' '); }
-/* "Mohamed Kama" -> "MK". Names are collected in full so the child can be found
-   on the ward, but the review and the saved-record view show initials only, so
-   a screen held up in a busy ward does not display anyone's name. */
+/* Initials are the only identifier held: letters, upper case, no spaces. Anything
+   typed with spaces or punctuation ("M K", "Mohamed Kama") is reduced to the
+   first letter of each part, so a slip cannot leave a name in the data. */
 function initials(s){
-  return String(s||'').trim().split(/[\s\-']+/).filter(Boolean).map(w=>w[0].toUpperCase()).join('');
+  const t=String(s||'').trim();
+  if(!t) return '';
+  const parts=t.split(/[\s\-'.]+/).filter(Boolean);
+  const out = parts.length>1 ? parts.map(w=>w[0]) : [t];
+  return out.join('').replace(/[^A-Za-z]/g,'').toUpperCase().slice(0,5);
 }
 /* normalise a record's child name for duplicate comparison */
 function normName(r){
-  const nm=r.childName||fullName(r.childFirst,r.childMiddle,r.childLast);
+  const nm=r.childName||r.childInit||'';
   return String(nm||'').trim().toLowerCase().replace(/\s+/g,' ');
 }
 /* a child (same first/middle/last name AND same date of birth) may be enrolled
@@ -956,7 +970,7 @@ function isOptional(q,a){ a=a||ans; return typeof q.optional==='function' ? !!q.
 /* `qc` is the wording to use when the record is a control */
 function qText(q,a){ a=a||ans; return (q.qc && isControl(a)) ? q.qc : q.q; }
 function answered(q){
-  if(isOptional(q)||q.type==='auto'||q.type==='agecalc'||q.type==='agegroup'||q.type==='note') return true;
+  if(isOptional(q)||q.type==='auto'||q.type==='agecalc'||q.type==='agegroup'||q.type==='daysill'||q.type==='note') return true;
   if(q.type==='autofill') return !!String(q.from(ans)||'').trim();
   const v=ans[q.id];
   if(q.type==='multi'){
@@ -1368,10 +1382,24 @@ function ctl(q){
     if(q.other) h+=`<div id="ob_${q.id}" style="${arr.indexOf('Other')>-1?'':'display:none'}"><div class="other-box"><input type="text" placeholder="Please specify…" data-k="${q.id}_other" value="${esc(ans[q.id+'_other']||'')}"></div></div>`;
     return h;
   }
+  if(q.type==='initials'){
+    return `<div class="field"><input type="text" inputmode="text" autocapitalize="characters" spellcheck="false"
+      maxlength="5" style="text-transform:uppercase;letter-spacing:.14em;font-family:var(--disp)"
+      data-init="${q.id}" placeholder="${esc(q.ph||'')}" value="${esc(v||'')}"></div>`;
+  }
   if(q.type==='autofill'){
     const val=q.from(ans)||'';
     ans[q.id]=val;
     return `<div class="field"><input type="text" data-auto="${q.id}" readonly value="${esc(val||'— select a hospital first —')}"></div>`;
+  }
+  if(q.type==='daysill'){
+    const val=q.from(ans); ans[q.id]=(val===''?'':val);
+    const txt = val===''
+      ? '\u2014 enter onset and admission \u2014'
+      : (val+' day'+(val===1?'':'s')+' ('+hoursIll(ans)+' h)');
+    const bad = val!=='' && val<0;
+    return `<div class="field"><input type="text" data-auto="${q.id}" readonly value="${esc(txt)}">
+      ${bad?`<div class="inelig">\u26a0 Admission is <b>before</b> the fever onset. Check both dates and times.</div>`:''}</div>`;
   }
   if(q.type==='agecalc'){
     const val=q.from(ans); ans[q.id]=(val===''?'':val);
@@ -1406,7 +1434,7 @@ function ctl(q){
 function qCard(q){
   if(q.type==='note'&&q.html) return `<div class="q-card" id="qc_${q.id}">${q.html}</div>`;
   const num=q.n?`<span class="q-no">Q${q.n}</span>`:'';
-  const req=(isOptional(q)||q.type==='auto'||q.type==='note')?'':'<span class="req">*</span>';
+  const req=(isOptional(q)||q.type==='auto'||q.type==='daysill'||q.type==='note')?'':'<span class="req">*</span>';
   return `<div class="q-card" id="qc_${q.id}">
     ${num}
     <div class="q-txt">${esc(qText(q))}${req}</div>
@@ -1507,6 +1535,12 @@ function wire(){
     }
   });
   b.addEventListener('input',e=>{
+    const n=e.target.closest('[data-init]');
+    if(n){
+      const clean=n.value.replace(/[^A-Za-z]/g,'').toUpperCase().slice(0,5);
+      if(n.value!==clean){ const at=n.selectionStart; n.value=clean; try{n.setSelectionRange(at,at);}catch(_){} }
+      ans[n.dataset.init]=clean; afterChange(n.dataset.init); return;
+    }
     const i=e.target.closest('[data-k]'); if(!i) return;
     ans[i.dataset.k]=i.value; afterChange(i.dataset.k);
   });
@@ -1524,6 +1558,16 @@ function afterChange(qid){
   const a=document.getElementById('autoId');
   if(a){ ans.studyId=formId(ans); a.value=ans.studyId||idPlaceholder(ans); }
   prefillDistricts();
+  if(qid==='B6'||qid==='B6t'||qid==='B8a'||qid==='B8b'){
+    const el=document.querySelector('[data-auto="B8"]');
+    if(el){
+      const v=daysIll(ans); ans.B8=(v===''?'':v);
+      el.value = v===''? '\u2014 enter onset and admission \u2014'
+                       : (v+' day'+(v===1?'':'s')+' ('+hoursIll(ans)+' h)');
+      const c=document.getElementById('qc_B8'); if(c) c.classList.remove('missing');
+      runFlags();
+    }
+  }
   if(qid==='A1'){                                     /* DOB -> recompute age + group */
     if(isControl(ans) && ans._reqGroup){
       const g=ageGroupOf(ans.A1);
@@ -1573,6 +1617,23 @@ function clearHidden(){
   });
 }
 
+/* Hours between fever onset and admission. Times are optional in practice — a
+   missing time is treated as midday, which keeps a whole-day answer honest
+   rather than silently assuming 00:00. */
+function hoursIll(a){
+  const d1=String(a.B6||'').trim(), d2=String(a.B8a||'').trim();
+  if(!d1||!d2) return '';
+  const t1=String(a.B6t||'').trim()||'12:00', t2=String(a.B8b||'').trim()||'12:00';
+  const ms=new Date(d2+'T'+t2).getTime()-new Date(d1+'T'+t1).getTime();
+  if(isNaN(ms)) return '';
+  return Math.round(ms/36e5);
+}
+function daysIll(a){
+  const h=hoursIll(a);
+  if(h==='') return '';
+  return Math.round(h/24*10)/10;      /* one decimal, e.g. 2.5 days */
+}
+
 /* ---------- clinical range flags (warn, never block) ---------- */
 const FLAGS=[
   {id:'D20', test:v=>v<5,     cls:'bad',  msg:'Hb < 5 g/dL — meets the WHO criterion for severe anaemia.'},
@@ -1588,6 +1649,13 @@ function runFlags(){
     const v=parseFloat(ans[f.id]);
     el.innerHTML=(!isNaN(v)&&f.test(v))?`<div class="flag ${f.cls}">${esc(f.msg)}</div>`:'';
   });
+  /* initials fields cap at 5 letters, but 4 or more usually means a name slipped in */
+  ['childInit','cgInit','CNinit'].forEach(id=>{
+    const e=document.getElementById('fl_'+id); if(!e) return;
+    e.innerHTML = String(ans[id]||'').length>3
+      ? `<div class="flag warn">That is long for initials \u2014 check a name has not been entered.</div>` : '';
+  });
+
   /* a case should have at least one WHO sign (advisory only) */
   const el=document.getElementById('fl_C16');
   if(el&&isCase(ans)){
@@ -1705,7 +1773,7 @@ function renderOutcomeReview(){
       <img class="bar-logo" src="${LOGO}" alt="ICF-SL"></div>
     <div class="body"><div class="rv">
       <div class="rv-head"><div class="id">${esc(ans.studyId||r._id||'')}</div>
-        <div class="meta">${esc(initials(ans.childName))}<br>${esc(ans.hospital||'')}</div></div>
+        <div class="meta">${esc(ans.childName||'')}<br>${esc(ans.hospital||'')}</div></div>
       <div class="rv-count">The outcome and follow-up for this case. The rest of the record was submitted at enrolment and is unchanged.</div>
       ${sheet.body}
     </div></div>
@@ -1773,15 +1841,8 @@ function fmt(q){
 function fullSheet(opts){
   opts=opts||{};
   let body='',cur='',asked=0,blank=0;
-  ALL.filter(q=>visible(q)&&q.type!=='note'&&q.type!=='auto'&&!q.rvHide&&(!opts.only||opts.only(q))).forEach(q=>{
+  ALL.filter(q=>visible(q)&&q.type!=='note'&&q.type!=='auto'&&(!opts.only||opts.only(q))).forEach(q=>{
     if(q.sec!==cur){cur=q.sec;body+=`<div class="rv-sec">${esc(cur)}</div>`;}
-    /* names are shown as initials, the parts folded into a single row */
-    if(q.rvInitials){
-      const ini=initials(q.rvOf(ans));
-      asked++; if(!ini) blank++;
-      body+=`<div class="rv-item"><span class="q">${esc(q.rvInitials)}</span><span class="a ${ini?'':'empty'}">${esc(ini||'—')}</span></div>`;
-      return;
-    }
     const val=fmt(q), miss=(val==='—'&&!isOptional(q));
     asked++; if(val==='—') blank++;
     body+=`<div class="rv-item"><span class="q">${esc(qText(q))}</span><span class="a ${opts.flag&&miss?'empty':(val==='—'?'empty':'')}">${esc(val)}</span></div>`;
@@ -1793,7 +1854,7 @@ function renderReview(){
      they belong to the later pass and are blank at this point */
   const sheet=fullSheet({flag:true, only:q=>!isOutcomeQ(q)});
   const body=sheet.body;
-  const nm=initials(fullName(ans.childFirst,ans.childMiddle,ans.childLast));
+  const nm=esc(ans.childInit||'');
   app.innerHTML=`<div class="appbar">
       <button class="ico-btn" onclick="backFromReview()">${I.back}</button>
       <div class="titles"><div class="eyebrow">Almost done</div><div class="title">Review &amp; submit</div></div>
@@ -1813,8 +1874,11 @@ function submitRec(){
   /* last safety net: drop any answer whose question is currently skipped, so a
      value entered and then skipped past can never reach the record */
   clearHidden();
-  ans.childName = fullName(ans.childFirst,ans.childMiddle,ans.childLast);
-  ans.cgName    = fullName(ans.cgFirst,ans.cgMiddle,ans.cgLast);
+  ans.childInit = initials(ans.childInit);
+  ans.cgInit    = initials(ans.cgInit);
+  ans.CNinit    = initials(ans.CNinit);
+  ans.childName = ans.childInit||'';   /* kept for the existing lookups */
+  ans.cgName    = ans.cgInit||'';
   const dup=findDuplicate(ans);
   if(dup){ renderDuplicate(dup); return; }
   const rec=Object.assign({},ans,{
@@ -2131,7 +2195,7 @@ function renderRec(){
   const sheet=fullSheet(); const body=sheet.body;
   ans=save;
   const pill = `<span class="tag-pill ${c?'case':'ctrl'}">${c?'CASE':'CONTROL'}</span>`;
-  const sub = esc(initials(r.childName))+(r.cgName?' · caregiver: '+esc(initials(r.cgName)):'');
+  const sub = esc(r.childName||'')+(r.cgName?' · caregiver: '+esc(r.cgName):'');
   app.innerHTML=`<div class="appbar"><button class="ico-btn" onclick="renderList()">${I.back}</button>
       <div class="titles"><div class="eyebrow">Enrolment</div><div class="title">${esc(r._id)}</div></div>
       ${pill}</div>
